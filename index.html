@@ -1,451 +1,484 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>senbondo configurator</title>
-  <style>
-    :root{
-      --bg:#ffffff;
-      --panel:#f3f4f6;
-      --panel2:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --btn:#e5e7eb;
-      --btnText:#111827;
-      --btnActive:#2563eb;
-      --btnActiveText:#ffffff;
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --radius: 18px;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>senbondo configurator</title>
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+<style>
+:root{
+  --bg:#ffffff;
+  --panel:#f3f4f6;
+  --panel2:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --btn:#e5e7eb;
+  --btnText:#111827;
+  --btnActive:#2563eb;
+  --btnActiveText:#ffffff;
+  --radius:18px;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
+}
 
-    /* --- Layout --- */
-    .app{
-      display:flex;
-      gap:16px;
-      padding:16px;
-      min-height:100vh;
-    }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    .sidebar{
-      width:min(420px, 44vw);
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:14px;
-      overflow:auto;
-      max-height:calc(100vh - 32px);
-      box-shadow:var(--shadow);
-    }
+/* ===== Layout ===== */
+.app{
+  display:grid;
+  grid-template-columns: 420px 1fr;
+  gap:16px;
+  padding:16px;
+  min-height:100vh;
+}
 
-    .main{
-      flex:1;
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
+/* iPad/スマホ：画像を先に（上）、メニューは下 */
+@media (max-width: 980px){
+  .app{
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+  .viewerCard{ order:0; }
+  .menuCard{ order:1; }
+}
 
-    .stageWrap{
-      flex:1;
-      background:var(--panel2);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden; /* 重要：はみ出しを見せない */
-    }
+/* iPad横〜PC：並べる */
+.menuCard{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  overflow:auto;
+  box-shadow:var(--shadow);
+  max-height:calc(100vh - 32px);
+}
 
-    /* --- Stage (image stacking) --- */
-    .stage{
-      position:relative;
-      width:min(820px, 92vw);
-      /* スマホ/iPadで小さくなりすぎないよう高さも確保 */
-      height:auto;
-    }
+.viewerCard{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
 
-    /* ベース含め全レイヤーは同じサイズの透過PNG前提 */
-    .layer{
-      width:100%;
-      height:auto;
-      display:block;
-      user-select:none;
-      -webkit-user-drag:none;
-    }
-    .layer.part{
-      position:absolute;
-      left:0;
-      top:0;
-      pointer-events:none;
-    }
+/* ===== Stage ===== */
+.stage{
+  position:relative;
+  width:min(900px, 100%);
+  aspect-ratio: 1 / 1;
+  max-height: calc(100vh - 60px);
+}
 
-    /* --- Sidebar UI --- */
-    .title{
-      font-weight:700;
-      margin:4px 0 10px;
-      font-size:14px;
-      color:var(--muted);
-      letter-spacing:.02em;
-    }
+.layer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
 
-    .group{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px;
-      margin-bottom:12px;
-    }
+/* ===== UI ===== */
+.header{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.header h1{
+  font-size:14px;
+  margin:0;
+  color:var(--muted);
+  font-weight:700;
+}
+.resetBtn{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  cursor:pointer;
+  min-height:40px;
+}
+.resetBtn:hover{filter:brightness(.98)}
 
-    .groupHeader{
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:10px;
-    }
-    .groupHeader h3{
-      margin:0;
-      font-size:14px;
-      letter-spacing:.01em;
-    }
-    .groupHeader .count{
-      font-size:12px;
-      color:var(--muted);
-    }
+.group{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:12px;
+}
+.groupTitle{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 10px 0;
+}
+.groupTitle h3{
+  font-size:14px;
+  margin:0;
+}
+.groupTitle .note{
+  font-size:12px;
+  color:var(--muted);
+}
 
-    .btnGrid{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
+.btnGrid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
 
-    button.opt{
-      appearance:none;
-      border:1px solid var(--border);
-      background:var(--btn);
-      color:var(--btnText);
-      padding:10px 12px;
-      border-radius:12px;
-      font-size:13px;
-      line-height:1;
-      cursor:pointer;
-      transition: transform .02s ease, background .12s ease, color .12s ease, border-color .12s ease;
-      min-width:84px;
-      /* タップしやすく */
-      min-height:40px;
-    }
-    button.opt:active{transform:scale(.99)}
-    button.opt[aria-pressed="true"]{
-      background:var(--btnActive);
-      color:var(--btnActiveText);
-      border-color:transparent;
-    }
+button.opt{
+  border:1px solid var(--border);
+  background:var(--btn);
+  color:var(--btnText);
+  border-radius:12px;
+  padding:10px 12px;
+  font-size:13px;
+  cursor:pointer;
+  min-height:40px;
+}
+button.opt[aria-pressed="true"]{
+  background:var(--btnActive);
+  color:var(--btnActiveText);
+  border-color:transparent;
+}
+button.opt:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
 
-    .footerBox{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px;
-    }
-    .footerBox h4{
-      margin:0 0 8px;
-      font-size:13px;
-      color:var(--muted);
-    }
-    .selRow{
-      display:flex;
-      gap:10px;
-      justify-content:space-between;
-      padding:6px 0;
-      border-top:1px dashed var(--border);
-      font-size:13px;
-    }
-    .selRow:first-of-type{border-top:none}
-    .selKey{color:var(--muted)}
-    .selVal{font-weight:700}
+/* current selection */
+.current{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+}
+.current h4{
+  margin:0 0 8px 0;
+  font-size:13px;
+  color:var(--muted);
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:6px 0;
+  border-top:1px dashed var(--border);
+  font-size:13px;
+}
+.row:first-of-type{border-top:none}
+.k{color:var(--muted)}
+.v{font-weight:700}
 
-    .resetRow{
-      margin-top:10px;
-      display:flex;
-      gap:8px;
-    }
-    .resetBtn{
-      border:1px solid var(--border);
-      background:#fff;
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      min-height:40px;
-    }
-
-    /* --- Responsive --- */
-    @media (max-width: 980px){
-      .app{
-        flex-direction:column;
-      }
-      .sidebar{
-        width:100%;
-        max-height:none;
-      }
-      .stage{
-        width:min(860px, 96vw);
-      }
-    }
-  </style>
+/* toast */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(17,24,39,.92);
+  color:#fff;
+  padding:10px 12px;
+  border-radius:12px;
+  font-size:13px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+  z-index:999;
+}
+.toast.show{opacity:1}
+</style>
 </head>
 
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="title">千本堂 カスタマイズ</div>
 
-      <div id="controls"></div>
+<div class="app">
 
-      <div class="footerBox">
-        <h4>現在の選択</h4>
-        <div class="selRow"><div class="selKey">上台戸板</div><div class="selVal" id="sel-door">通常</div></div>
-        <div class="selRow"><div class="selKey">背板</div><div class="selVal" id="sel-center">通常</div></div>
-        <div class="selRow"><div class="selKey">柱</div><div class="selVal" id="sel-hashira">ON</div></div>
-        <div class="selRow"><div class="selKey">内陣</div><div class="selVal" id="sel-back">通常</div></div>
-        <div class="selRow"><div class="selKey">下台戸板</div><div class="selVal" id="sel-unit">通常</div></div>
+  <!-- Viewer (first on mobile) -->
+  <section class="viewerCard">
+    <div class="stage">
+      <img id="layer-base" class="layer" alt="base">
+      <img id="layer-unit" class="layer" alt="unit">
+      <img id="layer-back" class="layer" alt="back">
+      <img id="layer-center" class="layer" alt="center">
+      <img id="layer-hashira" class="layer" alt="hashira">
+      <img id="layer-door" class="layer" alt="door">
+    </div>
+  </section>
 
-        <div class="resetRow">
-          <button class="resetBtn" id="resetBtn">初期状態に戻す</button>
-        </div>
-      </div>
-    </aside>
+  <!-- Menu -->
+  <aside class="menuCard">
 
-    <main class="main">
-      <section class="stageWrap">
-        <div class="stage" id="stage">
-          <!-- ベースは一番下（最初に置く） -->
-          <img class="layer" id="layer-base" alt="base" />
+    <div class="header">
+      <h1>千本堂 カスタマイズ</h1>
+      <button id="resetBtn" class="resetBtn">初期状態に戻す</button>
+    </div>
 
-          <!-- カスタムパーツ（ベースの上に重なる） -->
-          <img class="layer part" id="layer-unit" alt="unit" />
-          <img class="layer part" id="layer-back" alt="back" />
-          <img class="layer part" id="layer-center" alt="center" />
-          <img class="layer part" id="layer-hashira" alt="hashira" />
-          <img class="layer part" id="layer-door" alt="door" />
-        </div>
-      </section>
-    </main>
-  </div>
+    <div id="controls"></div>
 
-  <script>
-    /*
-      ✅ 重要仕様まとめ
-      - すべて透過PNG、キャンバスサイズ同一
-      - ベースは最下層
-      - 選択名は「ボタン表示名」（label）を表示（ファイル名は出さない）
-      - 初期状態：door/center/back/unit は「通常」、柱は「ON」
-      - フォルダ構成（例）
-        base/base.png
-        door/door_normal.png ...
-        center/center_normal.png ...
-        hashira/hashira_on.png ...
-        back/back_normal.png ...
-        unit/unit_normal.png ...
-    */
+    <div class="current">
+      <h4>現在の選択</h4>
+      <div class="row"><div class="k">上台戸板</div><div class="v" id="sel-door">通常</div></div>
+      <div class="row"><div class="k">背板</div><div class="v" id="sel-center">通常</div></div>
+      <div class="row"><div class="k">柱</div><div class="v" id="sel-hashira">ON</div></div>
+      <div class="row"><div class="k">内陣</div><div class="v" id="sel-back">通常</div></div>
+      <div class="row"><div class="k">下台戸板</div><div class="v" id="sel-unit">通常</div></div>
+    </div>
 
-    const PARTS = [
-      {
-        key: "door",
-        jp: "上台戸板",
-        layerId: "layer-door",
-        selId: "sel-door",
-        options: [
-          { id: "normal",  label: "通常",         file: "door/door_normal.png" },
-          { id: "kokutan", label: "黒丹調",       file: "door/door_kokutan.png" },
-          { id: "shitan",  label: "紫丹調",       file: "door/door_shitan.png" },
-          { id: "oborozakura", label: "おぼろ桜", file: "door/door_oborozakura.png" },
-          { id: "uzunomichi",  label: "渦の道",   file: "door/door_uzunomichi.png" },
-          { id: "w",       label: "ウォールナット", file: "door/door_w.png" },
-          { id: "yaraido", label: "矢来堂",       file: "door/door_yaraido.png" },
-        ],
-        defaultId: "normal",
-      },
-      {
-        key: "center",
-        jp: "背板",
-        layerId: "layer-center",
-        selId: "sel-center",
-        options: [
-          { id: "normal",  label: "通常",         file: "center/center_normal.png" },
-          { id: "luminous",label: "ルミナス",     file: "center/center_luminous.png" },
-          { id: "kokutan", label: "黒丹調",       file: "center/center_kokutan.png" },
-          { id: "shitan",  label: "紫丹調",       file: "center/center_shitan.png" },
-          { id: "kinshi",  label: "金紙",         file: "center/center_kinshi.png" },
-          { id: "w",       label: "ウォールナット", file: "center/center_w.png" },
-          { id: "uzunomichi", label: "渦の道",    file: "center/center_uzunomichi.png" },
-          { id: "oborozakura", label: "おぼろ桜", file: "center/center_oborozakura.png" },
+  </aside>
 
-          { id: "sakuranamiki-kokutan", label: "桜並木（黒丹）", file: "center/center_sakuranamiki-kokutan.png" },
-          { id: "sakuranamiki-shitan",  label: "桜並木（紫丹）", file: "center/center_sakuranamiki-shitan.png" },
-          { id: "sakuranamiki-w",       label: "桜並木（ウォールナット）", file: "center/center_sakuranamiki-w.png" },
+</div>
 
-          { id: "towazakura-kokutan", label: "永遠桜（黒丹）", file: "center/center_towazakura-kokutan.png" },
-          { id: "towazakura-shitan",      label: "永遠桜（紫丹）", file: "center/center_towazakura-shitan.png" },
-          { id: "towazakura-w",      label: "永遠桜（ウォールナット）", file: "center/center_towazakura-w.png" },
-        ],
-        defaultId: "normal",
-      },
-      {
-        key: "hashira",
-        jp: "柱",
-        layerId: "layer-hashira",
-        selId: "sel-hashira",
-        options: [
-          { id: "on",  label: "ON",  file: "hashira/hashira_on.png" },
-          { id: "off", label: "OFF", file: "hashira/hashira_off.png" },
-        ],
-        defaultId: "on", // ✅ 柱はONが初期アクティブ
-      },
-      {
-        key: "back",
-        jp: "内陣",
-        layerId: "layer-back",
-        selId: "sel-back",
-        options: [
-          { id: "normal",  label: "通常",         file: "back/back_normal.png" },
-          { id: "luminous",label: "ルミナス",     file: "back/back_luminous.png" },
-          { id: "iris",    label: "アイリス",     file: "back/back_iris.png" },
-          { id: "kinshi",  label: "金紙",         file: "back/back_kinshi.png" },
-          { id: "lily",    label: "リリー",       file: "back/back_lily.png" },
-          { id: "w",       label: "ウォールナット", file: "back/back_w.png" },
-        ],
-        defaultId: "normal",
-      },
-      {
-        key: "unit",
-        jp: "下台戸板",
-        layerId: "layer-unit",
-        selId: "sel-unit",
-        options: [
-          { id: "normal",  label: "通常",         file: "unit/unit_normal.png" },
-          { id: "yaraido", label: "矢来堂",       file: "unit/unit_yaraido.png" },
-        ],
-        defaultId: "normal",
-      },
-    ];
+<div class="toast" id="toast"></div>
 
-    const BASE_FILE = "base/base.png";
+<script>
+/* ===== parts config =====
+   key:
+   - door   = 上台戸板
+   - center = 背板
+   - hashira= 柱
+   - back   = 内陣
+   - unit   = 下台戸板
+*/
 
-    // 現在の状態（選択IDを保持）
-    const state = {
-      base: BASE_FILE,
-      door: null,
-      center: null,
-      hashira: null,
-      back: null,
-      unit: null,
-    };
+const BASE_FILE = "base/base.png";
 
-    function $(id){ return document.getElementById(id); }
+const PARTS = [
+  {
+    key:"door", jp:"上台戸板", layerId:"layer-door", selId:"sel-door",
+    options:[
+      {id:"normal",label:"通常",file:"door/door_normal.png"},
+      {id:"kokutan",label:"黒丹調",file:"door/door_kokutan.png"},
+      {id:"shitan",label:"紫丹調",file:"door/door_shitan.png"},
+      {id:"oborozakura",label:"おぼろ桜",file:"door/door_oborozakura.png"},
+      {id:"uzunomichi",label:"渦の道",file:"door/door_uzunomichi.png"},
+      {id:"w",label:"ウォールナット",file:"door/door_w.png"},
+      {id:"yaraido",label:"矢来堂",file:"door/door_yaraido.png"},
+    ],
+    defaultId:"normal"
+  },
+  {
+    key:"center", jp:"背板", layerId:"layer-center", selId:"sel-center",
+    options:[
+      {id:"normal",label:"通常",file:"center/center_normal.png"},
+      {id:"luminous",label:"ルミナス",file:"center/center_luminous.png"},
+      {id:"kokutan",label:"黒丹調",file:"center/center_kokutan.png"},
+      {id:"shitan",label:"紫丹調",file:"center/center_shitan.png"},
+      {id:"kinshi",label:"金紙",file:"center/center_kinshi.png"},
+      {id:"donsu",label:"緞子",file:"center/center_donsu.png"},
+      {id:"w",label:"ウォールナット",file:"center/center_w.png"},
+      {id:"uzunomichi",label:"渦の道",file:"center/center_uzunomichi.png"},
+      {id:"oborozakura",label:"おぼろ桜",file:"center/center_oborozakura.png"},
+      {id:"sakuranamiki-kokutan",label:"桜並木（黒丹）",file:"center/center_sakuranamiki-kokutan.png"},
+      {id:"sakuranamiki-shitan",label:"桜並木（紫丹）",file:"center/center_sakuranamiki-shitan.png"},
+      {id:"sakuranamiki-w",label:"桜並木（ウォールナット）",file:"center/center_sakuranamiki-w.png"},
+      {id:"towazakura-kokutan",label:"永遠桜（黒丹）",file:"center/center_towazakura-kokutan.png"},
+      {id:"towazakura-kokutan",label:"永遠桜（紫丹）",file:"center/center_towazakura-shitan.png"},
+      {id:"towazakura-w",label:"永遠桜（ウォールナット）",file:"center/center_towazakura-w.png"},
+    ],
+    defaultId:"normal"
+  },
+  {
+    key:"hashira", jp:"柱", layerId:"layer-hashira", selId:"sel-hashira",
+    options:[
+      {id:"on",label:"ON",file:"hashira/hashira_on.png"},
+      {id:"off",label:"OFF",file:"hashira/hashira_off.png"},
+    ],
+    defaultId:"on"
+  },
+  {
+    key:"back", jp:"内陣", layerId:"layer-back", selId:"sel-back",
+    options:[
+      {id:"normal",label:"通常",file:"back/back_normal.png"},
+      {id:"luminous",label:"ルミナス",file:"back/back_luminous.png"},
+      {id:"iris",label:"アイリス",file:"back/back_iris.png"},
+      {id:"kinshi",label:"金紙",file:"back/back_kinshi.png"},
+      {id:"lily",label:"リリー",file:"back/back_lily.png"},
+      {id:"w",label:"ウォールナット",file:"back/back_w.png"},
+    ],
+    defaultId:"normal"
+  },
+  {
+    key:"unit", jp:"下台戸板", layerId:"layer-unit", selId:"sel-unit",
+    options:[
+      {id:"normal",label:"通常",file:"unit/unit_normal.png"},
+      {id:"kokutan",label:"黒丹調",file:"unit/unit_kokutan.png"},
+      {id:"shitan",label:"紫丹調",file:"unit/unit_shitan.png"},
+      {id:"oborozakura",label:"おぼろ桜",file:"unit/unit_oborozakura.png"},
+      {id:"yaraido",label:"矢来堂",file:"unit/unit_yaraido.png"},
+    ],
+    defaultId:"normal"
+  },
+];
 
-    function setImage(layerId, src){
-      const img = $(layerId);
-      if(!img) return;
+const state = {
+  door:null,
+  center:null,
+  hashira:null,
+  back:null,
+  unit:null
+};
 
-      // 画像が変わらない問題対策：同じsrcでも再読込したいケース用にキャッシュバスター
-      const bust = "v=" + Date.now();
-      img.src = src.includes("?") ? (src + "&" + bust) : (src + "?" + bust);
+function $(id){ return document.getElementById(id); }
+
+function toast(msg){
+  const t=$("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer=setTimeout(()=>t.classList.remove("show"),1100);
+}
+
+function setImg(id, src){
+  // キャッシュで変わらない時があるので軽くバスター
+  const bust="v="+Date.now();
+  $(id).src = src + (src.includes("?") ? "&"+bust : "?"+bust);
+}
+
+function setSelText(selId, label){
+  $(selId).textContent = label;
+}
+
+function setActive(partKey, optId){
+  const wrap = document.querySelector(`[data-part="${partKey}"]`);
+  if(!wrap) return;
+  wrap.querySelectorAll("button.opt").forEach(btn=>{
+    btn.setAttribute("aria-pressed", btn.dataset.opt===optId ? "true" : "false");
+  });
+}
+
+function getPart(partKey){
+  return PARTS.find(p=>p.key===partKey);
+}
+
+function getOpt(partKey, optId){
+  const p=getPart(partKey);
+  return p ? p.options.find(o=>o.id===optId) : null;
+}
+
+/* ===== 依存ルール =====
+   背板(center) が normal 以外なら、柱(hashira)は必ずON。
+   その時、柱OFFは選べない（ボタンdisabled）。
+*/
+function enforceRules(){
+  const centerId = state.center;
+
+  const mustHashiraOn = (centerId && centerId !== "normal");
+
+  if(mustHashiraOn){
+    if(state.hashira !== "on"){
+      // 強制ON
+      state.hashira = "on";
+      const opt = getOpt("hashira","on");
+      setImg(getPart("hashira").layerId, opt.file);
+      setSelText(getPart("hashira").selId, opt.label);
+      setActive("hashira","on");
+      toast("背板が通常以外なので、柱はON固定です");
     }
+  }
 
-    function setSelectedText(selId, label){
-      const el = $(selId);
-      if(el) el.textContent = label;
+  // ボタン無効化
+  const hashWrap = document.querySelector(`[data-part="hashira"]`);
+  if(hashWrap){
+    const offBtn = hashWrap.querySelector(`button.opt[data-opt="off"]`);
+    if(offBtn){
+      offBtn.disabled = mustHashiraOn;
+      offBtn.title = mustHashiraOn ? "背板が通常以外のときは柱OFFにできません" : "";
     }
+  }
+}
 
-    function setActiveButton(partKey, optId){
-      const wrap = document.querySelector(`[data-part="${partKey}"]`);
-      if(!wrap) return;
-      wrap.querySelectorAll("button.opt").forEach(btn=>{
-        btn.setAttribute("aria-pressed", btn.dataset.opt === optId ? "true" : "false");
-      });
-    }
+function apply(partKey, optId, silent=false){
+  const part=getPart(partKey);
+  const opt=getOpt(partKey, optId);
+  if(!part || !opt) return;
 
-    function apply(partKey, optId){
-      const part = PARTS.find(p=>p.key===partKey);
-      if(!part) return;
+  state[partKey]=optId;
 
-      const opt = part.options.find(o=>o.id===optId);
-      if(!opt) return;
+  setImg(part.layerId, opt.file);
+  setSelText(part.selId, opt.label);
+  setActive(partKey, optId);
 
-      state[partKey] = optId;
+  // 依存ルール適用
+  enforceRules();
 
-      // 画像反映
-      setImage(part.layerId, opt.file);
+  if(!silent){
+    toast(`${part.jp}：${opt.label}`);
+  }
+}
 
-      // 表示名はボタン表示名（label）
-      setSelectedText(part.selId, opt.label);
+function renderControls(){
+  const root=$("controls");
+  root.innerHTML="";
 
-      // ボタンActive
-      setActiveButton(partKey, optId);
-    }
+  PARTS.forEach(part=>{
+    const box=document.createElement("section");
+    box.className="group";
 
-    function resetAll(){
-      // ベース
-      setImage("layer-base", BASE_FILE);
+    const head=document.createElement("div");
+    head.className="groupTitle";
+    head.innerHTML=`<h3>${part.jp}</h3><div class="note">${part.options.length}項目</div>`;
+    box.appendChild(head);
 
-      // 各パーツ初期値
-      PARTS.forEach(part=>{
-        apply(part.key, part.defaultId);
-      });
-    }
+    const grid=document.createElement("div");
+    grid.className="btnGrid";
+    grid.dataset.part = part.key;
 
-    function renderControls(){
-      const root = $("controls");
-      root.innerHTML = "";
+    part.options.forEach(opt=>{
+      const btn=document.createElement("button");
+      btn.className="opt";
+      btn.type="button";
+      btn.textContent=opt.label;
+      btn.dataset.opt=opt.id;
+      btn.setAttribute("aria-pressed","false");
+      btn.addEventListener("click",()=>apply(part.key,opt.id));
+      grid.appendChild(btn);
+    });
 
-      PARTS.forEach(part=>{
-        const group = document.createElement("div");
-        group.className = "group";
+    box.appendChild(grid);
+    root.appendChild(box);
+  });
+}
 
-        const head = document.createElement("div");
-        head.className = "groupHeader";
-        head.innerHTML = `<h3>${part.jp}</h3><div class="count">${part.options.length} items</div>`;
-        group.appendChild(head);
+function resetAll(){
+  setImg("layer-base", BASE_FILE);
 
-        const grid = document.createElement("div");
-        grid.className = "btnGrid";
-        grid.setAttribute("data-part", part.key);
+  PARTS.forEach(part=>{
+    apply(part.key, part.defaultId, true);
+  });
 
-        part.options.forEach(opt=>{
-          const btn = document.createElement("button");
-          btn.className = "opt";
-          btn.type = "button";
-          btn.textContent = opt.label;        // ✅ ボタン名は日本語ラベル
-          btn.dataset.opt = opt.id;
-          btn.setAttribute("aria-pressed", "false");
-          btn.addEventListener("click", ()=> apply(part.key, opt.id));
-          grid.appendChild(btn);
-        });
+  // 初期状態のルールを適用（center normalなので hashira offも選べる状態）
+  enforceRules();
+  toast("初期状態に戻しました");
+}
 
-        group.appendChild(grid);
-        root.appendChild(group);
-      });
-    }
+$("resetBtn").addEventListener("click", resetAll);
 
-    // 起動
-    renderControls();
-    $("resetBtn").addEventListener("click", resetAll);
+renderControls();
+resetAll();
+</script>
 
-    // 初期状態：全部「通常」＋柱はON
-    resetAll();
+</body>
+</html>
   </script>
 </body>
+
 </html>
