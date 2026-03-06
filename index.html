@@ -189,7 +189,6 @@ button.opt:disabled{
   cursor:not-allowed;
 }
 
-/* current selection */
 .current,
 .memoBox{
   background:#fff;
@@ -262,7 +261,6 @@ textarea{
   margin-top:12px;
 }
 
-/* toast */
 .toast{
   position:fixed;
   left:50%;
@@ -280,7 +278,7 @@ textarea{
 }
 .toast.show{opacity:1}
 
-/* ===== hidden export sheet (A4 1枚専用) ===== */
+/* ===== hidden export sheet (A4 1枚専用 / 上半分画像・下半分詳細) ===== */
 .exportSheet{
   position:fixed;
   left:-99999px;
@@ -289,38 +287,35 @@ textarea{
   height:1123px;
   background:#fff;
   color:#111;
-  padding:28px;
+  padding:24px;
   font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
   overflow:hidden;
 }
 
 .exportTitle{
-  font-size:22px;
+  font-size:20px;
   font-weight:700;
-  line-height:1.3;
-  margin-bottom:6px;
+  line-height:1.35;
+  margin-bottom:4px;
 }
 
 .exportMeta{
   font-size:12px;
   color:#666;
-  margin-bottom:16px;
+  margin-bottom:12px;
 }
 
-.exportMain{
-  display:grid;
-  grid-template-columns:1.05fr 0.95fr;
-  gap:20px;
-  height:980px;
-}
-
-.exportLeft{
+.exportImageSection{
+  height:510px;
   display:flex;
-  align-items:flex-start;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:14px;
 }
 
 .exportImageWrap{
   width:100%;
+  height:100%;
   border:1px solid #ddd;
   border-radius:12px;
   padding:10px;
@@ -330,7 +325,7 @@ textarea{
 .exportStage{
   position:relative;
   width:100%;
-  aspect-ratio:1 / 1;
+  height:100%;
   background:#fff;
 }
 
@@ -342,10 +337,11 @@ textarea{
   object-fit:contain;
 }
 
-.exportRight{
+.exportDetailSection{
+  height:540px;
   display:flex;
   flex-direction:column;
-  gap:16px;
+  gap:14px;
 }
 
 .exportSection h3{
@@ -384,8 +380,8 @@ textarea{
   border:1px solid #eee;
   border-radius:12px;
   padding:12px;
-  min-height:220px;
-  max-height:420px;
+  min-height:180px;
+  max-height:300px;
   overflow:hidden;
 }
 </style>
@@ -395,7 +391,6 @@ textarea{
 
 <div class="app">
 
-  <!-- Viewer -->
   <section class="viewerCard">
     <div class="stage" id="stage">
       <img id="layer-base" class="layer" alt="base">
@@ -407,7 +402,6 @@ textarea{
     </div>
   </section>
 
-  <!-- Menu -->
   <aside class="menuCard">
 
     <div class="header">
@@ -463,34 +457,32 @@ textarea{
   <div id="exportTitle" class="exportTitle"></div>
   <div id="exportMeta" class="exportMeta"></div>
 
-  <div class="exportMain">
-    <div class="exportLeft">
-      <div class="exportImageWrap">
-        <div class="exportStage">
-          <img id="exp-base" class="exportLayer">
-          <img id="exp-unit" class="exportLayer">
-          <img id="exp-back" class="exportLayer">
-          <img id="exp-center" class="exportLayer">
-          <img id="exp-hashira" class="exportLayer">
-          <img id="exp-door" class="exportLayer">
-        </div>
+  <div class="exportImageSection">
+    <div class="exportImageWrap">
+      <div class="exportStage">
+        <img id="exp-base" class="exportLayer">
+        <img id="exp-unit" class="exportLayer">
+        <img id="exp-back" class="exportLayer">
+        <img id="exp-center" class="exportLayer">
+        <img id="exp-hashira" class="exportLayer">
+        <img id="exp-door" class="exportLayer">
       </div>
     </div>
+  </div>
 
-    <div class="exportRight">
-      <div class="exportSection">
-        <h3>選択仕様</h3>
-        <div class="exportRow"><div class="exportLabel">上台戸板</div><div class="exportValue" id="exp-sel-door"></div></div>
-        <div class="exportRow"><div class="exportLabel">背板</div><div class="exportValue" id="exp-sel-center"></div></div>
-        <div class="exportRow"><div class="exportLabel">柱</div><div class="exportValue" id="exp-sel-hashira"></div></div>
-        <div class="exportRow"><div class="exportLabel">内陣</div><div class="exportValue" id="exp-sel-back"></div></div>
-        <div class="exportRow"><div class="exportLabel">下台戸板</div><div class="exportValue" id="exp-sel-unit"></div></div>
-      </div>
+  <div class="exportDetailSection">
+    <div class="exportSection">
+      <h3>選択仕様</h3>
+      <div class="exportRow"><div class="exportLabel">上台戸板</div><div class="exportValue" id="exp-sel-door"></div></div>
+      <div class="exportRow"><div class="exportLabel">背板</div><div class="exportValue" id="exp-sel-center"></div></div>
+      <div class="exportRow"><div class="exportLabel">背板柱</div><div class="exportValue" id="exp-sel-hashira"></div></div>
+      <div class="exportRow"><div class="exportLabel">内陣</div><div class="exportValue" id="exp-sel-back"></div></div>
+      <div class="exportRow"><div class="exportLabel">下台戸板</div><div class="exportValue" id="exp-sel-unit"></div></div>
+    </div>
 
-      <div class="exportSection">
-        <h3>備考</h3>
-        <div id="exp-memo" class="exportMemo"></div>
-      </div>
+    <div class="exportSection">
+      <h3>備考</h3>
+      <div id="exp-memo" class="exportMemo"></div>
     </div>
   </div>
 </div>
@@ -723,7 +715,7 @@ function fillExportSheet(){
 
   $("exp-sel-door").textContent = $("sel-door").textContent;
   $("exp-sel-center").textContent = $("sel-center").textContent;
-  $("exp-sel-hashira").textContent = $("sel-hashira").textContent;
+  $("exp-sel-hashira").textContent = $("sel-hashira").textContent === "ON" ? "有り" : "無し";
   $("exp-sel-back").textContent = $("sel-back").textContent;
   $("exp-sel-unit").textContent = $("sel-unit").textContent;
 
