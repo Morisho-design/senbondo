@@ -320,12 +320,16 @@ textarea{
   border-radius:12px;
   padding:10px;
   background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .exportStage{
   position:relative;
   width:100%;
-  height:100%;
+  max-width:490px;   /* 正方形で見せるため最大幅を制限 */
+  aspect-ratio:1 / 1;
   background:#fff;
 }
 
@@ -335,6 +339,7 @@ textarea{
   width:100%;
   height:100%;
   object-fit:contain;
+  object-position:center;
 }
 
 .exportDetailSection{
@@ -776,3 +781,4 @@ resetAll();
 
 </body>
 </html>
+
