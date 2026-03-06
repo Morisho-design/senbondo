@@ -31,6 +31,7 @@ body{
 }
 
 /* ===== Layout ===== */
+/* PCは 5:5 */
 .app{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -39,13 +40,14 @@ body{
   min-height:100vh;
 }
 
-@media (max-width: 980px){
+/* iPad/スマホ：画像を先（上）、メニューは下 */
+@media (max-width:980px){
   .app{
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto;
   }
-  .viewerCard{ order:0; }
-  .menuCard{ order:1; }
+  .viewerCard{order:0}
+  .menuCard{order:1}
 }
 
 .menuCard{
@@ -97,6 +99,7 @@ body{
   justify-content:space-between;
   gap:10px;
   margin-bottom:10px;
+  flex-wrap:wrap;
 }
 .header h1{
   font-size:14px;
@@ -104,6 +107,12 @@ body{
   color:var(--muted);
   font-weight:700;
 }
+.headerBtns{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
 .resetBtn{
   border:1px solid var(--border);
   background:#f9fafb;
@@ -115,7 +124,6 @@ body{
   width:auto;
   color:#6b7280;
 }
-
 .resetBtn:hover{
   background:#f3f4f6;
 }
@@ -129,8 +137,9 @@ body{
   min-height:40px;
   width:100%;
 }
-.resetBtn:hover,
-.pdfBtn:hover{filter:brightness(.98)}
+.pdfBtn:hover{
+  filter:brightness(.98);
+}
 
 .group{
   background:#fff;
@@ -256,39 +265,60 @@ textarea{
 }
 .toast.show{opacity:1}
 
-/* ===== hidden export sheet ===== */
+/* ===== hidden export sheet (A4 1枚専用) ===== */
 .exportSheet{
   position:fixed;
   left:-99999px;
   top:0;
-  width:794px; /* A4 width at 96dpi approx */
+  width:794px;
+  height:1123px;
   background:#fff;
   color:#111;
-  padding:24px;
+  padding:28px;
   font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+  overflow:hidden;
 }
+
 .exportTitle{
   font-size:22px;
   font-weight:700;
-  margin-bottom:8px;
+  line-height:1.3;
+  margin-bottom:6px;
 }
+
 .exportMeta{
-  font-size:14px;
-  color:#444;
-  margin-bottom:18px;
+  font-size:12px;
+  color:#666;
+  margin-bottom:16px;
 }
+
+.exportMain{
+  display:grid;
+  grid-template-columns:1.05fr 0.95fr;
+  gap:20px;
+  height:980px;
+}
+
+.exportLeft{
+  display:flex;
+  align-items:flex-start;
+}
+
 .exportImageWrap{
+  width:100%;
   border:1px solid #ddd;
   border-radius:12px;
-  padding:12px;
-  margin-bottom:18px;
+  padding:10px;
+  background:#fff;
 }
+
 .exportStage{
   position:relative;
   width:100%;
   aspect-ratio:1 / 1;
   background:#fff;
 }
+
 .exportLayer{
   position:absolute;
   inset:0;
@@ -296,39 +326,52 @@ textarea{
   height:100%;
   object-fit:contain;
 }
-.exportSection{
-  margin-top:18px;
+
+.exportRight{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
 }
+
 .exportSection h3{
-  font-size:16px;
-  margin:0 0 10px 0;
+  font-size:15px;
+  margin:0 0 8px 0;
 }
+
 .exportRow{
   display:flex;
   justify-content:space-between;
   gap:12px;
-  padding:8px 0;
+  padding:7px 0;
   border-top:1px solid #eee;
-  font-size:14px;
+  font-size:13px;
 }
+
 .exportRow:first-child{
   border-top:none;
 }
+
 .exportLabel{
   color:#666;
+  flex:0 0 90px;
 }
+
 .exportValue{
   font-weight:700;
   text-align:right;
+  flex:1;
 }
+
 .exportMemo{
   white-space:pre-wrap;
-  line-height:1.6;
-  font-size:14px;
+  line-height:1.5;
+  font-size:13px;
   border:1px solid #eee;
   border-radius:12px;
   padding:12px;
-  min-height:80px;
+  min-height:220px;
+  max-height:420px;
+  overflow:hidden;
 }
 </style>
 </head>
@@ -354,7 +397,9 @@ textarea{
 
     <div class="header">
       <h1>千本堂 カスタマイズ</h1>
-      <button id="resetBtn" class="resetBtn">初期状態に戻す</button>
+      <div class="headerBtns">
+        <button id="resetBtn" class="resetBtn">初期状態に戻す</button>
+      </div>
     </div>
 
     <div id="controls"></div>
@@ -398,29 +443,35 @@ textarea{
   <div id="exportTitle" class="exportTitle"></div>
   <div id="exportMeta" class="exportMeta"></div>
 
-  <div class="exportImageWrap">
-    <div class="exportStage">
-      <img id="exp-base" class="exportLayer">
-      <img id="exp-unit" class="exportLayer">
-      <img id="exp-back" class="exportLayer">
-      <img id="exp-center" class="exportLayer">
-      <img id="exp-hashira" class="exportLayer">
-      <img id="exp-door" class="exportLayer">
+  <div class="exportMain">
+    <div class="exportLeft">
+      <div class="exportImageWrap">
+        <div class="exportStage">
+          <img id="exp-base" class="exportLayer">
+          <img id="exp-unit" class="exportLayer">
+          <img id="exp-back" class="exportLayer">
+          <img id="exp-center" class="exportLayer">
+          <img id="exp-hashira" class="exportLayer">
+          <img id="exp-door" class="exportLayer">
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="exportSection">
-    <h3>選択仕様</h3>
-    <div class="exportRow"><div class="exportLabel">上台戸板</div><div class="exportValue" id="exp-sel-door"></div></div>
-    <div class="exportRow"><div class="exportLabel">背板</div><div class="exportValue" id="exp-sel-center"></div></div>
-    <div class="exportRow"><div class="exportLabel">柱</div><div class="exportValue" id="exp-sel-hashira"></div></div>
-    <div class="exportRow"><div class="exportLabel">内陣</div><div class="exportValue" id="exp-sel-back"></div></div>
-    <div class="exportRow"><div class="exportLabel">下台戸板</div><div class="exportValue" id="exp-sel-unit"></div></div>
-  </div>
+    <div class="exportRight">
+      <div class="exportSection">
+        <h3>選択仕様</h3>
+        <div class="exportRow"><div class="exportLabel">上台戸板</div><div class="exportValue" id="exp-sel-door"></div></div>
+        <div class="exportRow"><div class="exportLabel">背板</div><div class="exportValue" id="exp-sel-center"></div></div>
+        <div class="exportRow"><div class="exportLabel">柱</div><div class="exportValue" id="exp-sel-hashira"></div></div>
+        <div class="exportRow"><div class="exportLabel">内陣</div><div class="exportValue" id="exp-sel-back"></div></div>
+        <div class="exportRow"><div class="exportLabel">下台戸板</div><div class="exportValue" id="exp-sel-unit"></div></div>
+      </div>
 
-  <div class="exportSection">
-    <h3>備考</h3>
-    <div id="exp-memo" class="exportMemo"></div>
+      <div class="exportSection">
+        <h3>備考</h3>
+        <div id="exp-memo" class="exportMemo"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -428,6 +479,15 @@ textarea{
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <script>
+/* ===== parts config =====
+   key:
+   - door   = 上台戸板
+   - center = 背板
+   - hashira= 柱
+   - back   = 内陣
+   - unit   = 下台戸板
+*/
+
 const BASE_FILE = "base/base.png";
 
 const PARTS = [
@@ -480,7 +540,7 @@ const PARTS = [
       {id:"luminous",label:"ルミナス",file:"back/back_luminous.png"},
       {id:"iris",label:"アイリス",file:"back/back_iris.png"},
       {id:"kinshi",label:"金紙",file:"back/back_kinshi.png"},
-      {id:"lily",label:"リリー",file:"back/back_back_lily.png"},
+      {id:"lily",label:"リリー",file:"back/back_lily.png"},
       {id:"w",label:"ウォールナット",file:"back/back_w.png"},
       {id:"uzunomichi",label:"渦の道",file:"back/back_uzunomichi.png"},
     ],
@@ -540,6 +600,10 @@ function getOpt(partKey, optId){
   return p ? p.options.find(o=>o.id===optId) : null;
 }
 
+/* ===== 依存ルール =====
+   背板(center) が normal 以外なら、柱(hashira)は必ずON。
+   その時、柱OFFは選べない（ボタンdisabled）。
+*/
 function enforceRules(){
   const centerId = state.center;
   const mustHashiraOn = (centerId && centerId !== "normal");
@@ -677,30 +741,11 @@ async function exportPdf(){
 
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 6;
+    const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
 
-   // A4 1ページに収める
-const margin = 10;
-
-const usableW = pageW - margin*2;
-const usableH = pageH - margin*2;
-
-const imgRatio = canvas.width / canvas.height;
-const pageRatio = usableW / usableH;
-
-let renderW, renderH;
-
-if(imgRatio > pageRatio){
-  renderW = usableW;
-  renderH = usableW / imgRatio;
-}else{
-  renderH = usableH;
-  renderW = usableH * imgRatio;
-}
-
-const x = (pageW - renderW) / 2;
-const y = (pageH - renderH) / 2;
-
-pdf.addImage(imgData, "JPEG", x, y, renderW, renderH);
+    pdf.addImage(imgData, "JPEG", margin, margin, usableW, usableH);
 
     const now = new Date();
     const fileName =
@@ -719,7 +764,11 @@ pdf.addImage(imgData, "JPEG", x, y, renderW, renderH);
   }
 }
 
-$("resetBtn").addEventListener("click", resetAll);
+$("resetBtn").addEventListener("click", ()=>{
+  if(confirm("カスタマイズを初期状態に戻しますか？")){
+    resetAll();
+  }
+});
 $("pdfBtn").addEventListener("click", exportPdf);
 
 renderControls();
@@ -728,4 +777,5 @@ resetAll();
 
 </body>
 </html>
+
 
