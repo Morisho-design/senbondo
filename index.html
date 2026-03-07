@@ -23,7 +23,6 @@
 
 *{box-sizing:border-box}
 html,body{height:100%}
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
@@ -230,7 +229,6 @@ input[type="text"]{
 textarea{
   min-height:120px;
   resize:vertical;
-  touch-action: pan-y;
 }
 
 .field{
@@ -280,7 +278,7 @@ textarea{
 }
 .toast.show{opacity:1}
 
-/* ===== hidden export sheet ===== */
+/* ===== hidden export sheet (A4 1枚専用 / 上半分画像・下半分詳細) ===== */
 .exportSheet{
   position:fixed;
   left:-99999px;
@@ -330,7 +328,7 @@ textarea{
 .exportStage{
   position:relative;
   width:100%;
-  max-width:490px;
+  max-width:490px;   /* 正方形で見せるため最大幅を制限 */
   aspect-ratio:1 / 1;
   background:#fff;
 }
@@ -391,12 +389,12 @@ textarea{
 
   <section class="viewerCard">
     <div class="stage" id="stage">
-      <img id="layer-base" class="layer">
-      <img id="layer-unit" class="layer">
-      <img id="layer-back" class="layer">
-      <img id="layer-center" class="layer">
-      <img id="layer-hashira" class="layer">
-      <img id="layer-door" class="layer">
+      <img id="layer-base" class="layer" alt="base">
+      <img id="layer-unit" class="layer" alt="unit">
+      <img id="layer-back" class="layer" alt="back">
+      <img id="layer-center" class="layer" alt="center">
+      <img id="layer-hashira" class="layer" alt="hashira">
+      <img id="layer-door" class="layer" alt="door">
     </div>
   </section>
 
@@ -422,17 +420,19 @@ textarea{
 
     <div class="memoBox">
       <h4>備考</h4>
-      <textarea id="memo"></textarea>
+      <textarea id="memo" placeholder="備考を入力してください"></textarea>
 
       <div class="field">
-        <label>担当者名</label>
-        <input id="staffName" type="text">
+        <label for="staffName">担当者名</label>
+        <div class="inputSuffixWrap">
+          <input id="staffName" type="text" placeholder="担当者名を入力">
+        </div>
       </div>
 
       <div class="field">
-        <label>お客様名</label>
+        <label for="customerName">お客様名</label>
         <div class="inputSuffixWrap">
-          <input id="customerName" type="text">
+          <input id="customerName" type="text" placeholder="お客様名を入力">
           <span class="inputSuffix">様</span>
         </div>
       </div>
@@ -448,7 +448,336 @@ textarea{
 
 <div class="toast" id="toast"></div>
 
+<!-- hidden export area -->
+<div id="exportSheet" class="exportSheet">
+  <div id="exportTitle" class="exportTitle"></div>
+  <div id="exportMeta" class="exportMeta"></div>
+
+  <div class="exportImageSection">
+    <div class="exportImageWrap">
+      <div class="exportStage">
+        <img id="exp-base" class="exportLayer">
+        <img id="exp-unit" class="exportLayer">
+        <img id="exp-back" class="exportLayer">
+        <img id="exp-center" class="exportLayer">
+        <img id="exp-hashira" class="exportLayer">
+        <img id="exp-door" class="exportLayer">
+      </div>
+    </div>
+  </div>
+
+  <div class="exportDetailSection">
+<div class="exportSection">
+  <h3>選択仕様</h3>
+  <div class="exportLine">上台戸板：<span id="exp-sel-door"></span></div>
+  <div class="exportLine">背板中央：<span id="exp-sel-center"></span></div>
+  <div class="exportLine">背板柱：<span id="exp-sel-hashira"></span></div>
+  <div class="exportLine">背板全面：<span id="exp-sel-back"></span></div>
+  <div class="exportLine">下台戸板：<span id="exp-sel-unit"></span></div>
+</div>
+
+    <div class="exportSection">
+      <h3>備考</h3>
+      <div id="exp-memo" class="exportMemo"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<script>
+const BASE_FILE = "base/base.png";
+
+const PARTS = [
+  {
+    key:"door", jp:"上台戸板", layerId:"layer-door", selId:"sel-door",
+    options:[
+      {id:"normal",label:"通常",file:"door/door_normal.png"},
+      {id:"kokutan",label:"黒丹調",file:"door/door_kokutan.png"},
+      {id:"shitan",label:"紫丹調",file:"door/door_shitan.png"},
+      {id:"oborozakura",label:"おぼろ桜",file:"door/door_oborozakura.png"},
+      {id:"uzunomichi",label:"渦の道",file:"door/door_uzunomichi.png"},
+      {id:"w",label:"ウォールナット",file:"door/door_w.png"},
+      {id:"yaraido",label:"矢来堂",file:"door/door_yaraido.png"},
+    ],
+    defaultId:"normal"
+  },
+  {
+    key:"center", jp:"背板中央", layerId:"layer-center", selId:"sel-center",
+    options:[
+      {id:"normal",label:"未選択",file:"center/center_normal.png"},
+      {id:"luminous",label:"ルミナス",file:"center/center_luminous.png"},
+      {id:"kokutan",label:"黒丹調",file:"center/center_kokutan.png"},
+      {id:"shitan",label:"紫丹調",file:"center/center_shitan.png"},
+      {id:"kinshi",label:"金紙",file:"center/center_kinshi.png"},
+      {id:"donsu",label:"緞子",file:"center/center_donsu.png"},
+      {id:"w",label:"ウォールナット",file:"center/center_w.png"},
+      {id:"uzunomichi",label:"渦の道",file:"center/center_uzunomichi.png"},
+      {id:"oborozakura",label:"おぼろ桜",file:"center/center_oborozakura.png"},
+      {id:"sakuranamiki-kokutan",label:"桜並木（黒丹）",file:"center/center_sakuranamiki-kokutan.png"},
+      {id:"sakuranamiki-shitan",label:"桜並木（紫丹）",file:"center/center_sakuranamiki-shitan.png"},
+      {id:"sakuranamiki-w",label:"桜並木（ウォールナット）",file:"center/center_sakuranamiki-w.png"},
+      {id:"towazakura-kokutan",label:"永遠桜（黒丹）",file:"center/center_towazakura-kokutan.png"},
+      {id:"towazakura-shitan",label:"永遠桜（紫丹）",file:"center/center_towazakura-shitan.png"},
+      {id:"towazakura-w",label:"永遠桜（ウォールナット）",file:"center/center_towazakura-w.png"},
+    ],
+    defaultId:"normal"
+  },
+  {
+    key:"hashira", jp:"柱(背板中央未選択の場合のみ選択可能)", layerId:"layer-hashira", selId:"sel-hashira",
+    options:[
+      {id:"on",label:"ON",file:"hashira/hashira_on.png"},
+      {id:"off",label:"OFF",file:"hashira/hashira_off.png"},
+    ],
+    defaultId:"on"
+  },
+  {
+    key:"back", jp:"背板全面", layerId:"layer-back", selId:"sel-back",
+    options:[
+      {id:"normal",label:"通常",file:"back/back_normal.png"},
+      {id:"luminous",label:"ルミナス",file:"back/back_luminous.png"},
+      {id:"iris",label:"アイリス",file:"back/back_iris.png"},
+      {id:"kinshi",label:"金紙",file:"back/back_kinshi.png"},
+      {id:"lily",label:"リリー",file:"back/back_lily.png"},
+      {id:"w",label:"ウォールナット",file:"back/back_w.png"},
+      {id:"uzunomichi",label:"渦の道",file:"back/back_uzunomichi.png"},
+    ],
+    defaultId:"normal"
+  },
+  {
+    key:"unit", jp:"下台戸板", layerId:"layer-unit", selId:"sel-unit",
+    options:[
+      {id:"normal",label:"通常",file:"unit/unit_normal.png"},
+      {id:"yaraido",label:"矢来堂",file:"unit/unit_yaraido.png"},
+    ],
+    defaultId:"normal"
+  },
+];
+
+const state = {
+  door:null,
+  center:null,
+  hashira:null,
+  back:null,
+  unit:null
+};
+
+function $(id){ return document.getElementById(id); }
+
+function toast(msg){
+  const t=$("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer=setTimeout(()=>t.classList.remove("show"),1100);
+}
+
+function setImg(id, src){
+  const bust="v="+Date.now();
+  $(id).src = src + (src.includes("?") ? "&"+bust : "?"+bust);
+}
+
+function setSelText(selId, label){
+  $(selId).textContent = label;
+}
+
+function setActive(partKey, optId){
+  const wrap = document.querySelector(`[data-part="${partKey}"]`);
+  if(!wrap) return;
+  wrap.querySelectorAll("button.opt").forEach(btn=>{
+    btn.setAttribute("aria-pressed", btn.dataset.opt===optId ? "true" : "false");
+  });
+}
+
+function getPart(partKey){
+  return PARTS.find(p=>p.key===partKey);
+}
+
+function getOpt(partKey, optId){
+  const p=getPart(partKey);
+  return p ? p.options.find(o=>o.id===optId) : null;
+}
+
+function enforceRules(){
+  const centerId = state.center;
+  const mustHashiraOn = (centerId && centerId !== "normal");
+
+  if(mustHashiraOn){
+    if(state.hashira !== "on"){
+      state.hashira = "on";
+      const opt = getOpt("hashira","on");
+      setImg(getPart("hashira").layerId, opt.file);
+      setSelText(getPart("hashira").selId, opt.label);
+      setActive("hashira","on");
+      toast("背板が未選択以外なので、柱はON固定です");
+    }
+  }
+
+  const hashWrap = document.querySelector(`[data-part="hashira"]`);
+  if(hashWrap){
+    const offBtn = hashWrap.querySelector(`button.opt[data-opt="off"]`);
+    if(offBtn){
+      offBtn.disabled = mustHashiraOn;
+      offBtn.title = mustHashiraOn ? "背板が未選択以外のときは柱OFFにできません" : "";
+    }
+  }
+}
+
+function apply(partKey, optId, silent=false){
+  const part=getPart(partKey);
+  const opt=getOpt(partKey, optId);
+  if(!part || !opt) return;
+
+  state[partKey]=optId;
+
+  setImg(part.layerId, opt.file);
+  setSelText(part.selId, opt.label);
+  setActive(partKey, optId);
+
+  enforceRules();
+
+  if(!silent){
+    toast(`${part.jp}：${opt.label}`);
+  }
+}
+
+function renderControls(){
+  const root=$("controls");
+  root.innerHTML="";
+
+  PARTS.forEach(part=>{
+    const box=document.createElement("section");
+    box.className="group";
+
+    const head=document.createElement("div");
+    head.className="groupTitle";
+    head.innerHTML=`<h3>${part.jp}</h3><div class="note">${part.options.length}項目</div>`;
+    box.appendChild(head);
+
+    const grid=document.createElement("div");
+    grid.className="btnGrid";
+    grid.dataset.part = part.key;
+
+    part.options.forEach(opt=>{
+      const btn=document.createElement("button");
+      btn.className="opt";
+      btn.type="button";
+      btn.textContent=opt.label;
+      btn.dataset.opt=opt.id;
+      btn.setAttribute("aria-pressed","false");
+      btn.addEventListener("click",()=>apply(part.key,opt.id));
+      grid.appendChild(btn);
+    });
+
+    box.appendChild(grid);
+    root.appendChild(box);
+  });
+}
+
+function resetAll(){
+  setImg("layer-base", BASE_FILE);
+
+  PARTS.forEach(part=>{
+    apply(part.key, part.defaultId, true);
+  });
+
+  enforceRules();
+  toast("初期状態に戻しました");
+}
+
+function fillExportSheet(){
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,"0");
+  const dd = String(now.getDate()).padStart(2,"0");
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mi = String(now.getMinutes()).padStart(2,"0");
+  const dateText = `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
+
+  const staffName = $("staffName").value.trim() || "未入力";
+  const customerName = $("customerName").value.trim() || "未入力";
+  const memo = $("memo").value.trim() || "なし";
+
+  $("exportTitle").textContent = `${dateText}　担当：${staffName}　お客様名：${customerName}様`;
+  $("exportMeta").textContent = "千本堂カスタマイズ仕様書";
+
+  $("exp-base").src = $("layer-base").src;
+  $("exp-unit").src = $("layer-unit").src;
+  $("exp-back").src = $("layer-back").src;
+  $("exp-center").src = $("layer-center").src;
+  $("exp-hashira").src = $("layer-hashira").src;
+  $("exp-door").src = $("layer-door").src;
+
+  $("exp-sel-door").textContent = $("sel-door").textContent;
+  $("exp-sel-center").textContent = $("sel-center").textContent;
+  $("exp-sel-hashira").textContent = $("sel-hashira").textContent === "ON" ? "有り" : "無し";
+  $("exp-sel-back").textContent = $("sel-back").textContent;
+  $("exp-sel-unit").textContent = $("sel-unit").textContent;
+
+  $("exp-memo").textContent = memo;
+}
+
+async function exportPdf(){
+  try{
+    fillExportSheet();
+
+    const sheet = $("exportSheet");
+    const canvas = await html2canvas(sheet, {
+      backgroundColor:"#ffffff",
+      scale:2,
+      useCORS:true
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p","mm","a4");
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 6;
+    const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
+
+    pdf.addImage(imgData, "JPEG", margin, margin, usableW, usableH);
+
+    const now = new Date();
+    const fileName =
+      "senbondo_" +
+      now.getFullYear() +
+      String(now.getMonth()+1).padStart(2,"0") +
+      String(now.getDate()).padStart(2,"0") + "_" +
+      String(now.getHours()).padStart(2,"0") +
+      String(now.getMinutes()).padStart(2,"0") + ".pdf";
+
+    pdf.save(fileName);
+    toast("PDFを書き出しました");
+  }catch(err){
+    console.error(err);
+    toast("PDF出力に失敗しました");
+  }
+}
+
+$("resetBtn").addEventListener("click", ()=>{
+  if(confirm("カスタマイズを初期状態に戻しますか？")){
+    resetAll();
+  }
+});
+$("pdfBtn").addEventListener("click", exportPdf);
+
+renderControls();
+resetAll();
+</script>
+
 </body>
 </html>
+
+
+
+
+
+
+
 
 
