@@ -22,12 +22,19 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%}
+
+html,body{
+  height:auto;
+  min-height:100%;
+}
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
   background:var(--bg);
   color:var(--text);
+  -webkit-overflow-scrolling:touch;
+  overflow-x:hidden;
 }
 
 /* ===== Layout ===== */
@@ -39,13 +46,19 @@ body{
   min-height:100vh;
 }
 
+/* iPad/スマホ：画像を先（上）、メニューは下 */
 @media (max-width:980px){
   .app{
     grid-template-columns:1fr;
     grid-template-rows:auto auto;
+    min-height:auto;
   }
   .viewerCard{order:0}
-  .menuCard{order:1}
+  .menuCard{
+    order:1;
+    max-height:none;
+    overflow:visible;
+  }
 }
 
 .menuCard{
@@ -54,6 +67,8 @@ body{
   border-radius:var(--radius);
   padding:14px;
   overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
   box-shadow:var(--shadow);
   max-height:calc(100vh - 32px);
   min-width:0;
@@ -78,6 +93,13 @@ body{
   aspect-ratio:1 / 1;
   max-height:calc(100vh - 60px);
   background:#fff;
+}
+
+@media (max-width:980px){
+  .stage{
+    max-height:none;
+    width:100%;
+  }
 }
 
 .layer{
@@ -328,7 +350,7 @@ textarea{
 .exportStage{
   position:relative;
   width:100%;
-  max-width:490px;   /* 正方形で見せるため最大幅を制限 */
+  max-width:490px;
   aspect-ratio:1 / 1;
   background:#fff;
 }
@@ -467,14 +489,14 @@ textarea{
   </div>
 
   <div class="exportDetailSection">
-<div class="exportSection">
-  <h3>選択仕様</h3>
-  <div class="exportLine">上台戸板：<span id="exp-sel-door"></span></div>
-  <div class="exportLine">背板中央：<span id="exp-sel-center"></span></div>
-  <div class="exportLine">背板柱：<span id="exp-sel-hashira"></span></div>
-  <div class="exportLine">背板全面：<span id="exp-sel-back"></span></div>
-  <div class="exportLine">下台戸板：<span id="exp-sel-unit"></span></div>
-</div>
+    <div class="exportSection">
+      <h3>選択仕様</h3>
+      <div class="exportLine">上台戸板：<span id="exp-sel-door"></span></div>
+      <div class="exportLine">背板中央：<span id="exp-sel-center"></span></div>
+      <div class="exportLine">背板柱：<span id="exp-sel-hashira"></span></div>
+      <div class="exportLine">背板全面：<span id="exp-sel-back"></span></div>
+      <div class="exportLine">下台戸板：<span id="exp-sel-unit"></span></div>
+    </div>
 
     <div class="exportSection">
       <h3>備考</h3>
@@ -610,7 +632,7 @@ function enforceRules(){
       setImg(getPart("hashira").layerId, opt.file);
       setSelText(getPart("hashira").selId, opt.label);
       setActive("hashira","on");
-      toast("背板が未選択以外なので、柱はON固定です");
+      toast("背板中央が未選択以外なので、柱はON固定です");
     }
   }
 
@@ -619,7 +641,7 @@ function enforceRules(){
     const offBtn = hashWrap.querySelector(`button.opt[data-opt="off"]`);
     if(offBtn){
       offBtn.disabled = mustHashiraOn;
-      offBtn.title = mustHashiraOn ? "背板が未選択以外のときは柱OFFにできません" : "";
+      offBtn.title = mustHashiraOn ? "背板中央が未選択以外のときは柱OFFにできません" : "";
     }
   }
 }
@@ -772,9 +794,3 @@ resetAll();
 
 </body>
 </html>
-
-
-
-
-
-
