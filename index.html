@@ -190,7 +190,8 @@ button.opt:disabled{
 }
 
 .current,
-.memoBox{
+.memoBox,
+.priceBox{
   background:#fff;
   border:1px solid var(--border);
   border-radius:14px;
@@ -198,12 +199,14 @@ button.opt:disabled{
   margin-top:12px;
 }
 .current h4,
-.memoBox h4{
+.memoBox h4,
+.priceBox h4{
   margin:0 0 8px 0;
   font-size:13px;
   color:var(--muted);
 }
-.row{
+.row,
+.priceRow{
   display:flex;
   justify-content:space-between;
   gap:10px;
@@ -211,9 +214,28 @@ button.opt:disabled{
   border-top:1px dashed var(--border);
   font-size:13px;
 }
-.row:first-of-type{border-top:none}
-.k{color:var(--muted)}
-.v{font-weight:700}
+.row:first-of-type,
+.priceRow:first-of-type{
+  border-top:none;
+}
+.k,
+.priceLabel{
+  color:var(--muted);
+}
+.v,
+.priceValue{
+  font-weight:700;
+}
+.priceTotal{
+  font-size:18px;
+  font-weight:800;
+}
+.priceNote{
+  margin-top:8px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.5;
+}
 
 textarea,
 input[type="text"]{
@@ -278,7 +300,7 @@ textarea{
 }
 .toast.show{opacity:1}
 
-/* ===== hidden export sheet (A4 1枚専用 / 上半分画像・下半分詳細) ===== */
+/* ===== hidden export sheet ===== */
 .exportSheet{
   position:fixed;
   left:-99999px;
@@ -328,7 +350,7 @@ textarea{
 .exportStage{
   position:relative;
   width:100%;
-  max-width:490px;   /* 正方形で見せるため最大幅を制限 */
+  max-width:490px;
   aspect-ratio:1 / 1;
   background:#fff;
 }
@@ -418,6 +440,29 @@ textarea{
       <div class="row"><div class="k">下台戸板</div><div class="v" id="sel-unit">通常</div></div>
     </div>
 
+    <div class="priceBox">
+      <h4>見積金額</h4>
+      <div class="priceRow">
+        <div class="priceLabel">基本価格</div>
+        <div class="priceValue" id="price-base">¥899,800</div>
+      </div>
+      <div class="priceRow">
+        <div class="priceLabel">加算額</div>
+        <div class="priceValue" id="price-add">¥0</div>
+      </div>
+      <div class="priceRow">
+        <div class="priceLabel">税込合計</div>
+        <div class="priceValue priceTotal" id="price-total">¥899,800</div>
+      </div>
+
+      <div class="field" style="margin-top:10px;">
+        <label>見積明細</label>
+        <div id="price-breakdown" class="exportMemo" style="min-height:120px; max-height:220px;">加算パーツはありません。</div>
+      </div>
+
+      <div class="priceNote" id="price-note">※すべて税込価格です。</div>
+    </div>
+
     <div class="memoBox">
       <h4>備考</h4>
       <textarea id="memo" placeholder="備考を入力してください"></textarea>
@@ -448,7 +493,6 @@ textarea{
 
 <div class="toast" id="toast"></div>
 
-<!-- hidden export area -->
 <div id="exportSheet" class="exportSheet">
   <div id="exportTitle" class="exportTitle"></div>
   <div id="exportMeta" class="exportMeta"></div>
@@ -467,14 +511,24 @@ textarea{
   </div>
 
   <div class="exportDetailSection">
-<div class="exportSection">
-  <h3>選択仕様</h3>
-  <div class="exportLine">上台戸板：<span id="exp-sel-door"></span></div>
-  <div class="exportLine">背板中央：<span id="exp-sel-center"></span></div>
-  <div class="exportLine">背板柱：<span id="exp-sel-hashira"></span></div>
-  <div class="exportLine">背板全面：<span id="exp-sel-back"></span></div>
-  <div class="exportLine">下台戸板：<span id="exp-sel-unit"></span></div>
-</div>
+    <div class="exportSection">
+      <h3>選択仕様</h3>
+      <div class="exportLine">上台戸板：<span id="exp-sel-door"></span></div>
+      <div class="exportLine">背板中央：<span id="exp-sel-center"></span></div>
+      <div class="exportLine">背板柱：<span id="exp-sel-hashira"></span></div>
+      <div class="exportLine">背板全面：<span id="exp-sel-back"></span></div>
+      <div class="exportLine">下台戸板：<span id="exp-sel-unit"></span></div>
+    </div>
+
+    <div class="exportSection">
+      <h3>見積金額</h3>
+      <div class="exportLine">基本価格：<span id="exp-price-base"></span></div>
+      <div class="exportLine">加算額：<span id="exp-price-add"></span></div>
+      <div class="exportLine">税込合計：<span id="exp-price-total"></span></div>
+      <div class="exportLine">備考：<span id="exp-price-note"></span></div>
+      <div class="exportLine">見積明細：</div>
+      <div id="exp-price-breakdown" class="exportMemo"></div>
+    </div>
 
     <div class="exportSection">
       <h3>備考</h3>
@@ -494,16 +548,13 @@ const PARTS = [
     key:"door", jp:"上台戸板", layerId:"layer-door", selId:"sel-door",
     options:[
       {id:"normal",label:"通常",file:"door/door_normal.png"},
-      {id:"kokutan2",label:"黒丹調2枚",file:"door/door_kokutan2.png"},
-      {id:"kokutan4",label:"黒丹調4枚",file:"door/door_kokutan4.png"},
-      {id:"shitan2",label:"紫丹調2枚",file:"door/door_shitan2.png"},
-     {id:"shitan4",label:"紫丹調4枚",file:"door/door_shitan4.png"},
+      {id:"kokutan",label:"黒丹調",file:"door/door_kokutan.png"},
+      {id:"shitan",label:"紫丹調",file:"door/door_shitan.png"},
       {id:"oborozakura",label:"おぼろ桜",file:"door/door_oborozakura.png"},
       {id:"uzunomichi",label:"渦の道",file:"door/door_uzunomichi.png"},
-      {id:"w2",label:"ウォールナット2枚",file:"door/door_w2.png"},
-            {id:"w4",label:"ウォールナット4枚",file:"door/door_w4.png"},
+      {id:"w",label:"ウォールナット",file:"door/door_w.png"},
+      {id:"yaraido4",label:"矢来堂4枚",file:"door/door_yaraido4.png"},
       {id:"yaraido2",label:"矢来堂2枚",file:"door/door_yaraido2.png"},
-            {id:"yaraido4",label:"矢来堂4枚",file:"door/door_yaraido4.png"},
     ],
     defaultId:"normal"
   },
@@ -553,8 +604,10 @@ const PARTS = [
     key:"unit", jp:"下台戸板", layerId:"layer-unit", selId:"sel-unit",
     options:[
       {id:"normal",label:"通常",file:"unit/unit_normal.png"},
-     {id:"senbondo_zenmen",label:"千本格子全面",file:"unit/unit_senbondo_zenmen.png"},
-     {id:"yaraidozenmen",label:"矢来堂全面",file:"unit/unit_yaraidozenmen.png"},
+      {id:"senbondo_center",label:"千本格子中央",file:"unit/unit_senbondo_center.png"},
+      {id:"senbondo_zenmen",label:"千本格子全面",file:"unit/unit_senbondo_zenmen.png"},
+      {id:"yaraido",label:"矢来堂",file:"unit/unit_yaraido.png"},
+      {id:"yaraidozenmen",label:"矢来堂全面",file:"unit/unit_yaraidozenmen.png"},
     ],
     defaultId:"normal"
   },
@@ -568,6 +621,47 @@ const state = {
   unit:null
 };
 
+const BASE_PRICE = 899800;
+
+const PRICE_MAP = {
+  "door_yaraido4": 0,
+  "door_yaraido2": 0,
+  "door_oborozakura": 6600,
+  "door_shitan": 0,
+  "door_kokutan": 0,
+  "door_w": 0,
+  "door_uzunomichi": 39600,
+
+  "unit_senbondo_center": 9900,
+  "unit_yaraido": 0,
+
+  "back_kinshi": 0,
+  "back_lily": 6600,
+  "back_w": 0,
+  "back_uzunomichi": 6600,
+  "back_luminous": 0,
+  "back_iris": 1650,
+
+  "center_towazakura_w": 21450,
+  "center_towazakura_shitan": 21450,
+  "center_towazakura_kokutan": 21450,
+
+  "center_sakuranamiki_w": 21450,
+  "center_sakuranamiki_shitan": 21450,
+  "center_sakuranamiki_kokutan": 21450,
+
+  "center_oborozakura": 4950,
+  "center_w": 1650,
+  "center_kinshi": 1650,
+  "center_luminous": 2475,
+  "center_uzunomichi": 4950
+};
+
+const INQUIRY_KEYS = new Set([
+  "unit_senbondo_zenmen",
+  "unit_yaraidozenmen"
+]);
+
 function $(id){ return document.getElementById(id); }
 
 function toast(msg){
@@ -575,7 +669,7 @@ function toast(msg){
   t.textContent=msg;
   t.classList.add("show");
   clearTimeout(toast._timer);
-  toast._timer=setTimeout(()=>t.classList.remove("show"),1100);
+  toast._timer=setTimeout(()=>t.classList.remove("show"),1300);
 }
 
 function setImg(id, src){
@@ -604,6 +698,80 @@ function getOpt(partKey, optId){
   return p ? p.options.find(o=>o.id===optId) : null;
 }
 
+function formatYen(value){
+  return "¥" + value.toLocaleString("ja-JP");
+}
+
+function getSelectedPriceKey(partKey, optId){
+  if (!optId || optId === "normal" || optId === "off" || optId === "on") return null;
+  return `${partKey}_${optId}`;
+}
+
+function calcEstimate(){
+  let add = 0;
+  let inquiry = false;
+  let breakdown = [];
+
+  Object.keys(state).forEach(partKey => {
+    const optId = state[partKey];
+    const priceKey = getSelectedPriceKey(partKey, optId);
+    if (!priceKey) return;
+
+    const part = getPart(partKey);
+    const opt = getOpt(partKey, optId);
+
+    if (INQUIRY_KEYS.has(priceKey)) {
+      inquiry = true;
+      return;
+    }
+
+    const price = PRICE_MAP[priceKey] || 0;
+
+    if (price > 0) {
+      breakdown.push({
+        part: part.jp,
+        option: opt.label,
+        price: price
+      });
+    }
+
+    add += price;
+  });
+
+  return {
+    base: BASE_PRICE,
+    add,
+    total: BASE_PRICE + add,
+    inquiry,
+    breakdown
+  };
+}
+
+function updateEstimate(){
+  const est = calcEstimate();
+
+  $("price-base").textContent = formatYen(est.base);
+  $("price-add").textContent = formatYen(est.add);
+
+  if (est.inquiry) {
+    $("price-total").textContent = "お問い合わせください";
+    $("price-note").textContent = "※すべて税込価格です。";
+    $("price-breakdown").textContent = "特殊パーツとなりますのでお問い合わせください。";
+    return;
+  }
+
+  $("price-total").textContent = formatYen(est.total);
+  $("price-note").textContent = "※すべて税込価格です。";
+
+  if (est.breakdown.length === 0) {
+    $("price-breakdown").textContent = "加算パーツはありません。";
+  } else {
+    $("price-breakdown").textContent = est.breakdown
+      .map(item => `${item.part}：${item.option}　${formatYen(item.price)}`)
+      .join("\n");
+  }
+}
+
 function enforceRules(){
   const centerId = state.center;
   const mustHashiraOn = (centerId && centerId !== "normal");
@@ -615,7 +783,7 @@ function enforceRules(){
       setImg(getPart("hashira").layerId, opt.file);
       setSelText(getPart("hashira").selId, opt.label);
       setActive("hashira","on");
-      toast("背板が未選択以外なので、柱はON固定です");
+      toast("背板中央が未選択以外のため、柱はON固定です");
     }
   }
 
@@ -624,8 +792,58 @@ function enforceRules(){
     const offBtn = hashWrap.querySelector(`button.opt[data-opt="off"]`);
     if(offBtn){
       offBtn.disabled = mustHashiraOn;
-      offBtn.title = mustHashiraOn ? "背板が未選択以外のときは柱OFFにできません" : "";
+      offBtn.title = mustHashiraOn ? "背板中央が未選択以外のときは柱OFFにできません" : "";
     }
+  }
+
+  const doorIsYaraido = state.door === "yaraido4" || state.door === "yaraido2";
+  const unitIsYaraidoZenmen = state.unit === "yaraidozenmen";
+
+  const doorWrap = document.querySelector(`[data-part="door"]`);
+  const unitWrap = document.querySelector(`[data-part="unit"]`);
+
+  if(doorWrap){
+    doorWrap.querySelectorAll("button.opt").forEach(btn=>{
+      const isAllowed = ["yaraido4", "yaraido2"].includes(btn.dataset.opt);
+      if(unitIsYaraidoZenmen){
+        btn.disabled = !isAllowed;
+        btn.title = !isAllowed ? "下台戸板で矢来堂全面が選択されているため、上台戸板は矢来堂4枚・矢来堂2枚のみ選択可能です" : "";
+      }else{
+        btn.disabled = false;
+        btn.title = "";
+      }
+    });
+  }
+
+  if(unitWrap){
+    unitWrap.querySelectorAll("button.opt").forEach(btn=>{
+      const isYaraidoZenmen = btn.dataset.opt === "yaraidozenmen";
+      if(doorIsYaraido){
+        btn.disabled = !isYaraidoZenmen;
+        btn.title = !isYaraidoZenmen ? "上台戸板で矢来堂4枚・矢来堂2枚が選択されているため、下台戸板は矢来堂全面のみ選択可能です" : "";
+      }else{
+        btn.disabled = false;
+        btn.title = "";
+      }
+    });
+  }
+
+  if(doorIsYaraido && state.unit !== "yaraidozenmen"){
+    state.unit = "yaraidozenmen";
+    const opt = getOpt("unit","yaraidozenmen");
+    setImg(getPart("unit").layerId, opt.file);
+    setSelText(getPart("unit").selId, opt.label);
+    setActive("unit","yaraidozenmen");
+    toast("上台戸板が矢来堂のため、下台戸板は矢来堂全面に固定されました");
+  }
+
+  if(unitIsYaraidoZenmen && !(state.door === "yaraido4" || state.door === "yaraido2")){
+    state.door = "yaraido4";
+    const opt = getOpt("door","yaraido4");
+    setImg(getPart("door").layerId, opt.file);
+    setSelText(getPart("door").selId, opt.label);
+    setActive("door","yaraido4");
+    toast("下台戸板が矢来堂全面のため、上台戸板は矢来堂4枚・矢来堂2枚のみ選択可能です。矢来堂4枚に自動変更しました");
   }
 }
 
@@ -641,6 +859,7 @@ function apply(partKey, optId, silent=false){
   setActive(partKey, optId);
 
   enforceRules();
+  updateEstimate();
 
   if(!silent){
     toast(`${part.jp}：${opt.label}`);
@@ -688,6 +907,7 @@ function resetAll(){
   });
 
   enforceRules();
+  updateEstimate();
   toast("初期状態に戻しました");
 }
 
@@ -719,6 +939,25 @@ function fillExportSheet(){
   $("exp-sel-hashira").textContent = $("sel-hashira").textContent === "ON" ? "有り" : "無し";
   $("exp-sel-back").textContent = $("sel-back").textContent;
   $("exp-sel-unit").textContent = $("sel-unit").textContent;
+
+  const est = calcEstimate();
+  $("exp-price-base").textContent = formatYen(est.base);
+  $("exp-price-add").textContent = formatYen(est.add);
+
+  if (est.inquiry) {
+    $("exp-price-total").textContent = "お問い合わせください";
+    $("exp-price-note").textContent = "すべて税込価格です。";
+    $("exp-price-breakdown").textContent = "特殊パーツとなりますのでお問い合わせください。";
+  } else {
+    $("exp-price-total").textContent = formatYen(est.total);
+    $("exp-price-note").textContent = "すべて税込価格です。";
+    $("exp-price-breakdown").textContent =
+      est.breakdown.length === 0
+        ? "加算パーツはありません。"
+        : est.breakdown
+            .map(item => `${item.part}：${item.option}　${formatYen(item.price)}`)
+            .join("\n");
+  }
 
   $("exp-memo").textContent = memo;
 }
@@ -773,17 +1012,8 @@ $("pdfBtn").addEventListener("click", exportPdf);
 
 renderControls();
 resetAll();
+updateEstimate();
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
