@@ -190,8 +190,7 @@ button.opt:disabled{
 }
 
 .current,
-.memoBox,
-.priceBox{
+.memoBox{
   background:#fff;
   border:1px solid var(--border);
   border-radius:14px;
@@ -199,14 +198,12 @@ button.opt:disabled{
   margin-top:12px;
 }
 .current h4,
-.memoBox h4,
-.priceBox h4{
+.memoBox h4{
   margin:0 0 8px 0;
   font-size:13px;
   color:var(--muted);
 }
-.row,
-.priceRow{
+.row{
   display:flex;
   justify-content:space-between;
   gap:10px;
@@ -214,27 +211,14 @@ button.opt:disabled{
   border-top:1px dashed var(--border);
   font-size:13px;
 }
-.row:first-of-type,
-.priceRow:first-of-type{
+.row:first-of-type{
   border-top:none;
 }
-.k,
-.priceLabel{
+.k{
   color:var(--muted);
 }
-.v,
-.priceValue{
+.v{
   font-weight:700;
-}
-.priceTotal{
-  font-size:18px;
-  font-weight:800;
-}
-.priceNote{
-  margin-top:8px;
-  font-size:12px;
-  color:var(--muted);
-  line-height:1.5;
 }
 
 textarea,
@@ -440,7 +424,6 @@ textarea{
       <div class="row"><div class="k">下台戸板</div><div class="v" id="sel-unit">通常</div></div>
     </div>
 
- 
     <div class="memoBox">
       <h4>備考</h4>
       <textarea id="memo" placeholder="備考を入力してください"></textarea>
@@ -498,7 +481,6 @@ textarea{
       <div class="exportLine">下台戸板：<span id="exp-sel-unit"></span></div>
     </div>
 
-
     <div class="exportSection">
       <h3>備考</h3>
       <div id="exp-memo" class="exportMemo"></div>
@@ -528,7 +510,6 @@ const PARTS = [
       {id:"yaraido4",label:"矢来堂4枚",file:"door/door_yaraido4.png"},
       {id:"yaraido2",label:"矢来堂2枚内側",file:"door/door_yaraido2.png"},
       {id:"yaraido_w",label:"矢来堂2枚内側ウォールナット2枚外側",file:"door/door_yaraido_w.png"},
-      
     ],
     defaultId:"normal"
   },
@@ -595,60 +576,24 @@ const state = {
   unit:null
 };
 
-const BASE_PRICE = 899800;
+const YARAIDO_DOOR_IDS = new Set(["yaraido2", "yaraido4", "yaraido_w"]);
+const YARAIDO_UNIT_IDS = new Set(["yaraido2", "yaraidozenmen"]);
 
-const PRICE_MAP = {
-  "door_yaraido4": 0,
-  "door_yaraido2": 0,
-  "door_oborozakura": 6600,
-  "door_shitan": 0,
-  "door_kokutan": 0,
-  "door_w": 0,
-  "door_uzunomichi": 39600,
-
-  "unit_senbondo_center": 9900,
-  "unit_yaraido": 0,
-
-  "back_kinshi": 0,
-  "back_lily": 6600,
-  "back_w": 0,
-  "back_uzunomichi": 6600,
-  "back_luminous": 0,
-  "back_iris": 1650,
-
-  "center_towazakura_w": 21450,
-  "center_towazakura_shitan": 21450,
-  "center_towazakura_kokutan": 21450,
-
-  "center_sakuranamiki_w": 21450,
-  "center_sakuranamiki_shitan": 21450,
-  "center_sakuranamiki_kokutan": 21450,
-
-  "center_oborozakura": 4950,
-  "center_w": 1650,
-  "center_kinshi": 1650,
-  "center_luminous": 2475,
-  "center_uzunomichi": 4950
-};
-
-const INQUIRY_KEYS = new Set([
-  "unit_senbondo_zenmen",
-  "unit_yaraidozenmen"
-]);
-
-function $(id){ return document.getElementById(id); }
+function $(id){
+  return document.getElementById(id);
+}
 
 function toast(msg){
-  const t=$("toast");
-  t.textContent=msg;
+  const t = $("toast");
+  t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast._timer);
-  toast._timer=setTimeout(()=>t.classList.remove("show"),1300);
+  toast._timer = setTimeout(() => t.classList.remove("show"), 1300);
 }
 
 function setImg(id, src){
-  const bust="v="+Date.now();
-  $(id).src = src + (src.includes("?") ? "&"+bust : "?"+bust);
+  const bust = "v=" + Date.now();
+  $(id).src = src + (src.includes("?") ? "&" + bust : "?" + bust);
 }
 
 function setSelText(selId, label){
@@ -658,103 +603,36 @@ function setSelText(selId, label){
 function setActive(partKey, optId){
   const wrap = document.querySelector(`[data-part="${partKey}"]`);
   if(!wrap) return;
-  wrap.querySelectorAll("button.opt").forEach(btn=>{
-    btn.setAttribute("aria-pressed", btn.dataset.opt===optId ? "true" : "false");
+
+  wrap.querySelectorAll("button.opt").forEach(btn => {
+    btn.setAttribute("aria-pressed", btn.dataset.opt === optId ? "true" : "false");
   });
 }
 
 function getPart(partKey){
-  return PARTS.find(p=>p.key===partKey);
+  return PARTS.find(p => p.key === partKey);
 }
 
 function getOpt(partKey, optId){
-  const p=getPart(partKey);
-  return p ? p.options.find(o=>o.id===optId) : null;
+  const p = getPart(partKey);
+  return p ? p.options.find(o => o.id === optId) : null;
 }
 
-function formatYen(value){
-  return "¥" + value.toLocaleString("ja-JP");
+function isRestrictedDoorSelected(){
+  return YARAIDO_DOOR_IDS.has(state.door);
 }
 
-function getSelectedPriceKey(partKey, optId){
-  if (!optId || optId === "normal" || optId === "off" || optId === "on") return null;
-  return `${partKey}_${optId}`;
-}
-
-function calcEstimate(){
-  let add = 0;
-  let inquiry = false;
-  let breakdown = [];
-
-  Object.keys(state).forEach(partKey => {
-    const optId = state[partKey];
-    const priceKey = getSelectedPriceKey(partKey, optId);
-    if (!priceKey) return;
-
-    const part = getPart(partKey);
-    const opt = getOpt(partKey, optId);
-
-    if (INQUIRY_KEYS.has(priceKey)) {
-      inquiry = true;
-      return;
-    }
-
-    const price = PRICE_MAP[priceKey] || 0;
-
-    if (price > 0) {
-      breakdown.push({
-        part: part.jp,
-        option: opt.label,
-        price: price
-      });
-    }
-
-    add += price;
-  });
-
-  return {
-    base: BASE_PRICE,
-    add,
-    total: BASE_PRICE + add,
-    inquiry,
-    breakdown
-  };
-}
-
-function updateEstimate(){
-  const est = calcEstimate();
-
-  $("price-base").textContent = formatYen(est.base);
-  $("price-add").textContent = formatYen(est.add);
-
-  if (est.inquiry) {
-    $("price-total").textContent = "お問い合わせください";
-    $("price-note").textContent = "※すべて税込価格です。";
-    $("price-breakdown").textContent = "特殊パーツとなりますのでお問い合わせください。";
-    return;
+function normalizeState(){
+  if(state.center && state.center !== "normal"){
+    state.hashira = "on";
   }
 
-  $("price-total").textContent = formatYen(est.total);
-  $("price-note").textContent = "※すべて税込価格です。";
-
-  if (est.breakdown.length === 0) {
-    $("price-breakdown").textContent = "加算パーツはありません。";
-  } else {
-    $("price-breakdown").textContent = est.breakdown
-      .map(item => `${item.part}：${item.option}　${formatYen(item.price)}`)
-      .join("\n");
+  if(isRestrictedDoorSelected() && !YARAIDO_UNIT_IDS.has(state.unit)){
+    state.unit = "yaraido2";
   }
 }
 
-function syncUIFromState(){
-  PARTS.forEach(part => {
-    const opt = getOpt(part.key, state[part.key]);
-    if (!opt) return;
-    setImg(part.layerId, opt.file);
-    setSelText(part.selId, opt.label);
-    setActive(part.key, opt.id);
-  });
-
+function updateAvailability(){
   const centerId = state.center;
   const mustHashiraOn = (centerId && centerId !== "normal");
 
@@ -767,67 +645,52 @@ function syncUIFromState(){
     }
   }
 
-  updateEstimate();
-}
+  const unitWrap = document.querySelector(`[data-part="unit"]`);
+  if(unitWrap){
+    const restrictUnit = isRestrictedDoorSelected();
 
-function normalizeState(changedKey){
-  if(state.center && state.center !== "normal"){
-    state.hashira = "on";
-  }
-
-  const doorIsYaraido = state.door === "yaraido4" || state.door === "yaraido2";
-  const unitIsYaraidoZenmen = state.unit === "yaraidozenmen";
-
-  if(changedKey === "door"){
-    if(doorIsYaraido){
-      if(state.unit !== "yaraidozenmen"){
-        state.unit = "yaraidozenmen";
-      }
-    }else{
-      if(unitIsYaraidoZenmen){
-        state.unit = "normal";
-      }
-    }
-  }
-
-  if(changedKey === "unit"){
-    if(unitIsYaraidoZenmen){
-      if(!doorIsYaraido){
-        state.door = "yaraido4";
-      }
-    }else{
-      if(doorIsYaraido){
-        state.door = "normal";
-      }
-    }
+    unitWrap.querySelectorAll("button.opt").forEach(btn => {
+      const isAllowed = !restrictUnit || YARAIDO_UNIT_IDS.has(btn.dataset.opt);
+      btn.disabled = !isAllowed;
+      btn.title = !isAllowed ? "この上台戸板では選択できません" : "";
+    });
   }
 }
 
-function apply(partKey, optId, silent=false){
+function syncUIFromState(){
+  normalizeState();
+
+  PARTS.forEach(part => {
+    const opt = getOpt(part.key, state[part.key]);
+    if(!opt) return;
+    setImg(part.layerId, opt.file);
+    setSelText(part.selId, opt.label);
+    setActive(part.key, opt.id);
+  });
+
+  updateAvailability();
+}
+
+function apply(partKey, optId, silent = false){
   const part = getPart(partKey);
   const opt = getOpt(partKey, optId);
   if(!part || !opt) return;
 
+  const prevUnit = state.unit;
+
   state[partKey] = optId;
-  normalizeState(partKey);
+  normalizeState();
   syncUIFromState();
 
   if(!silent){
     let msg = `${part.jp}：${opt.label}`;
 
-    if(partKey === "door"){
-      if(optId === "yaraido4" || optId === "yaraido2"){
-        msg += "（下台戸板は矢来堂全面に自動変更）";
-      } else if(state.unit === "normal"){
-        msg += "（下台戸板を通常に戻しました）";
-      }
-    }
-
-    if(partKey === "unit"){
-      if(optId === "yaraidozenmen"){
-        msg += "（上台戸板は矢来堂4枚に自動変更）";
-      } else if(state.door === "normal"){
-        msg += "（上台戸板を通常に戻しました）";
+    if(partKey === "door" && isRestrictedDoorSelected()){
+      if(prevUnit !== state.unit){
+        const unitOpt = getOpt("unit", state.unit);
+        msg += `（下台戸板を${unitOpt.label}に変更）`;
+      }else{
+        msg += "（下台戸板は矢来堂のみ選択可能）";
       }
     }
 
@@ -840,30 +703,30 @@ function apply(partKey, optId, silent=false){
 }
 
 function renderControls(){
-  const root=$("controls");
-  root.innerHTML="";
+  const root = $("controls");
+  root.innerHTML = "";
 
-  PARTS.forEach(part=>{
-    const box=document.createElement("section");
-    box.className="group";
+  PARTS.forEach(part => {
+    const box = document.createElement("section");
+    box.className = "group";
 
-    const head=document.createElement("div");
-    head.className="groupTitle";
-    head.innerHTML=`<h3>${part.jp}</h3><div class="note">${part.options.length}項目</div>`;
+    const head = document.createElement("div");
+    head.className = "groupTitle";
+    head.innerHTML = `<h3>${part.jp}</h3><div class="note">${part.options.length}項目</div>`;
     box.appendChild(head);
 
-    const grid=document.createElement("div");
-    grid.className="btnGrid";
+    const grid = document.createElement("div");
+    grid.className = "btnGrid";
     grid.dataset.part = part.key;
 
-    part.options.forEach(opt=>{
-      const btn=document.createElement("button");
-      btn.className="opt";
-      btn.type="button";
-      btn.textContent=opt.label;
-      btn.dataset.opt=opt.id;
-      btn.setAttribute("aria-pressed","false");
-      btn.addEventListener("click",()=>apply(part.key,opt.id));
+    part.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "opt";
+      btn.type = "button";
+      btn.textContent = opt.label;
+      btn.dataset.opt = opt.id;
+      btn.setAttribute("aria-pressed", "false");
+      btn.addEventListener("click", () => apply(part.key, opt.id));
       grid.appendChild(btn);
     });
 
@@ -879,7 +742,7 @@ function resetAll(){
     state[part.key] = part.defaultId;
   });
 
-  normalizeState("reset");
+  normalizeState();
   syncUIFromState();
 
   toast("初期状態に戻しました");
@@ -888,10 +751,10 @@ function resetAll(){
 function fillExportSheet(){
   const now = new Date();
   const yyyy = now.getFullYear();
-  const mm = String(now.getMonth()+1).padStart(2,"0");
-  const dd = String(now.getDate()).padStart(2,"0");
-  const hh = String(now.getHours()).padStart(2,"0");
-  const mi = String(now.getMinutes()).padStart(2,"0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mi = String(now.getMinutes()).padStart(2, "0");
   const dateText = `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
 
   const staffName = $("staffName").value.trim() || "未入力";
@@ -913,26 +776,6 @@ function fillExportSheet(){
   $("exp-sel-hashira").textContent = $("sel-hashira").textContent === "ON" ? "有り" : "無し";
   $("exp-sel-back").textContent = $("sel-back").textContent;
   $("exp-sel-unit").textContent = $("sel-unit").textContent;
-
-  const est = calcEstimate();
-  $("exp-price-base").textContent = formatYen(est.base);
-  $("exp-price-add").textContent = formatYen(est.add);
-
-  if (est.inquiry) {
-    $("exp-price-total").textContent = "お問い合わせください";
-    $("exp-price-note").textContent = "すべて税込価格です。";
-    $("exp-price-breakdown").textContent = "特殊パーツとなりますのでお問い合わせください。";
-  } else {
-    $("exp-price-total").textContent = formatYen(est.total);
-    $("exp-price-note").textContent = "すべて税込価格です。";
-    $("exp-price-breakdown").textContent =
-      est.breakdown.length === 0
-        ? "加算パーツはありません。"
-        : est.breakdown
-            .map(item => `${item.part}：${item.option}　${formatYen(item.price)}`)
-            .join("\n");
-  }
-
   $("exp-memo").textContent = memo;
 }
 
@@ -950,7 +793,7 @@ async function exportPdf(){
     const imgData = canvas.toDataURL("image/jpeg", 0.98);
 
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF("p","mm","a4");
+    const pdf = new jsPDF("p", "mm", "a4");
 
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
@@ -964,10 +807,10 @@ async function exportPdf(){
     const fileName =
       "senbondo_" +
       now.getFullYear() +
-      String(now.getMonth()+1).padStart(2,"0") +
-      String(now.getDate()).padStart(2,"0") + "_" +
-      String(now.getHours()).padStart(2,"0") +
-      String(now.getMinutes()).padStart(2,"0") + ".pdf";
+      String(now.getMonth() + 1).padStart(2, "0") +
+      String(now.getDate()).padStart(2, "0") + "_" +
+      String(now.getHours()).padStart(2, "0") +
+      String(now.getMinutes()).padStart(2, "0") + ".pdf";
 
     pdf.save(fileName);
     toast("PDFを書き出しました");
@@ -977,11 +820,12 @@ async function exportPdf(){
   }
 }
 
-$("resetBtn").addEventListener("click", ()=>{
+$("resetBtn").addEventListener("click", () => {
   if(confirm("カスタマイズを初期状態に戻しますか？")){
     resetAll();
   }
 });
+
 $("pdfBtn").addEventListener("click", exportPdf);
 
 renderControls();
