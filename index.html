@@ -601,10 +601,12 @@ const PARTS = [
     defaultId:"normal"
   },
   {
-    key:"unit", jp:"下台戸板(上台戸板で矢来堂を選択した場合、下台戸板も矢来堂固定)", layerId:"layer-unit", selId:"sel-unit",
+    key:"unit", jp:"下台戸板", layerId:"layer-unit", selId:"sel-unit",
     options:[
       {id:"normal",label:"通常",file:"unit/unit_normal.png"},
+      {id:"senbondo_center",label:"千本格子中央",file:"unit/unit_senbondo_center.png"},
       {id:"senbondo_zenmen",label:"千本格子全面",file:"unit/unit_senbondo_zenmen.png"},
+      {id:"yaraido",label:"矢来堂",file:"unit/unit_yaraido.png"},
       {id:"yaraidozenmen",label:"矢来堂全面",file:"unit/unit_yaraidozenmen.png"},
     ],
     defaultId:"normal"
@@ -770,20 +772,17 @@ function updateEstimate(){
   }
 }
 
-function enforceRules(){
+function syncUIFromState(){
+  PARTS.forEach(part => {
+    const opt = getOpt(part.key, state[part.key]);
+    if (!opt) return;
+    setImg(part.layerId, opt.file);
+    setSelText(part.selId, opt.label);
+    setActive(part.key, opt.id);
+  });
+
   const centerId = state.center;
   const mustHashiraOn = (centerId && centerId !== "normal");
-
-  if(mustHashiraOn){
-    if(state.hashira !== "on"){
-      state.hashira = "on";
-      const opt = getOpt("hashira","on");
-      setImg(getPart("hashira").layerId, opt.file);
-      setSelText(getPart("hashira").selId, opt.label);
-      setActive("hashira","on");
-      toast("背板中央が未選択以外のため、柱はON固定です");
-    }
-  }
 
   const hashWrap = document.querySelector(`[data-part="hashira"]`);
   if(hashWrap){
@@ -794,73 +793,75 @@ function enforceRules(){
     }
   }
 
+  updateEstimate();
+}
+
+function normalizeState(changedKey){
+  if(state.center && state.center !== "normal"){
+    state.hashira = "on";
+  }
+
   const doorIsYaraido = state.door === "yaraido4" || state.door === "yaraido2";
   const unitIsYaraidoZenmen = state.unit === "yaraidozenmen";
 
-  const doorWrap = document.querySelector(`[data-part="door"]`);
-  const unitWrap = document.querySelector(`[data-part="unit"]`);
-
-  if(doorWrap){
-    doorWrap.querySelectorAll("button.opt").forEach(btn=>{
-      const isAllowed = ["yaraido4", "yaraido2"].includes(btn.dataset.opt);
+  if(changedKey === "door"){
+    if(doorIsYaraido){
+      if(state.unit !== "yaraidozenmen"){
+        state.unit = "yaraidozenmen";
+      }
+    }else{
       if(unitIsYaraidoZenmen){
-        btn.disabled = !isAllowed;
-        btn.title = !isAllowed ? "下台戸板で矢来堂全面が選択されているため、上台戸板は矢来堂4枚・矢来堂2枚のみ選択可能です" : "";
-      }else{
-        btn.disabled = false;
-        btn.title = "";
+        state.unit = "normal";
       }
-    });
+    }
   }
 
-  if(unitWrap){
-    unitWrap.querySelectorAll("button.opt").forEach(btn=>{
-      const isYaraidoZenmen = btn.dataset.opt === "yaraidozenmen";
+  if(changedKey === "unit"){
+    if(unitIsYaraidoZenmen){
+      if(!doorIsYaraido){
+        state.door = "yaraido4";
+      }
+    }else{
       if(doorIsYaraido){
-        btn.disabled = !isYaraidoZenmen;
-        btn.title = !isYaraidoZenmen ? "上台戸板で矢来堂4枚・矢来堂2枚が選択されているため、下台戸板は矢来堂全面のみ選択可能です" : "";
-      }else{
-        btn.disabled = false;
-        btn.title = "";
+        state.door = "normal";
       }
-    });
-  }
-
-  if(doorIsYaraido && state.unit !== "yaraidozenmen"){
-    state.unit = "yaraidozenmen";
-    const opt = getOpt("unit","yaraidozenmen");
-    setImg(getPart("unit").layerId, opt.file);
-    setSelText(getPart("unit").selId, opt.label);
-    setActive("unit","yaraidozenmen");
-    toast("上台戸板が矢来堂のため、下台戸板は矢来堂全面に固定されました");
-  }
-
-  if(unitIsYaraidoZenmen && !(state.door === "yaraido4" || state.door === "yaraido2")){
-    state.door = "yaraido4";
-    const opt = getOpt("door","yaraido4");
-    setImg(getPart("door").layerId, opt.file);
-    setSelText(getPart("door").selId, opt.label);
-    setActive("door","yaraido4");
-    toast("下台戸板が矢来堂全面のため、上台戸板は矢来堂4枚・矢来堂2枚のみ選択可能です。矢来堂4枚に自動変更しました");
+    }
   }
 }
 
 function apply(partKey, optId, silent=false){
-  const part=getPart(partKey);
-  const opt=getOpt(partKey, optId);
+  const part = getPart(partKey);
+  const opt = getOpt(partKey, optId);
   if(!part || !opt) return;
 
-  state[partKey]=optId;
-
-  setImg(part.layerId, opt.file);
-  setSelText(part.selId, opt.label);
-  setActive(partKey, optId);
-
-  enforceRules();
-  updateEstimate();
+  state[partKey] = optId;
+  normalizeState(partKey);
+  syncUIFromState();
 
   if(!silent){
-    toast(`${part.jp}：${opt.label}`);
+    let msg = `${part.jp}：${opt.label}`;
+
+    if(partKey === "door"){
+      if(optId === "yaraido4" || optId === "yaraido2"){
+        msg += "（下台戸板は矢来堂全面に自動変更）";
+      } else if(state.unit === "normal"){
+        msg += "（下台戸板を通常に戻しました）";
+      }
+    }
+
+    if(partKey === "unit"){
+      if(optId === "yaraidozenmen"){
+        msg += "（上台戸板は矢来堂4枚に自動変更）";
+      } else if(state.door === "normal"){
+        msg += "（上台戸板を通常に戻しました）";
+      }
+    }
+
+    if(partKey === "center" && state.center !== "normal"){
+      msg += "（柱はON固定）";
+    }
+
+    toast(msg);
   }
 }
 
@@ -900,12 +901,13 @@ function renderControls(){
 function resetAll(){
   setImg("layer-base", BASE_FILE);
 
-  PARTS.forEach(part=>{
-    apply(part.key, part.defaultId, true);
+  PARTS.forEach(part => {
+    state[part.key] = part.defaultId;
   });
 
-  enforceRules();
-  updateEstimate();
+  normalizeState("reset");
+  syncUIFromState();
+
   toast("初期状態に戻しました");
 }
 
@@ -1010,7 +1012,6 @@ $("pdfBtn").addEventListener("click", exportPdf);
 
 renderControls();
 resetAll();
-updateEstimate();
 </script>
 
 </body>
