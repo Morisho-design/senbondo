@@ -1,0 +1,382 @@
+:root{
+  --bg:#ffffff;
+  --panel:#f3f4f6;
+  --panel2:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --btn:#e5e7eb;
+  --btnText:#111827;
+  --btnActive:#2563eb;
+  --btnActiveText:#ffffff;
+  --radius:18px;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== App ===== */
+.app{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  padding:16px;
+  min-height:100vh;
+}
+
+@media (max-width:980px){
+  .app{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto;
+  }
+  .viewerCard{order:0}
+  .menuCard{order:1}
+}
+
+.menuCard{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  overflow:auto;
+  box-shadow:var(--shadow);
+  max-height:calc(100vh - 32px);
+  min-width:0;
+}
+
+.viewerCard{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* ===== Stage ===== */
+.stage{
+  position:relative;
+  width:100%;
+  aspect-ratio:1 / 1;
+  max-height:calc(100vh - 60px);
+  background:#fff;
+}
+
+.layer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+/* ===== UI ===== */
+.header{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+.header h1{
+  font-size:14px;
+  margin:0;
+  color:var(--muted);
+  font-weight:700;
+}
+.headerBtns{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.resetBtn{
+  border:1px solid var(--border);
+  background:#f9fafb;
+  border-radius:10px;
+  padding:4px 10px;
+  font-size:12px;
+  cursor:pointer;
+  height:28px;
+  width:auto;
+  color:#6b7280;
+}
+.resetBtn:hover{
+  background:#f3f4f6;
+}
+
+.pdfBtn{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  cursor:pointer;
+  min-height:40px;
+  width:100%;
+}
+.pdfBtn:hover{
+  filter:brightness(.98);
+}
+
+.group{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:12px;
+}
+.groupTitle{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 10px 0;
+}
+.groupTitle h3{
+  font-size:14px;
+  margin:0;
+}
+.groupTitle .note{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.btnGrid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+button.opt{
+  border:1px solid var(--border);
+  background:var(--btn);
+  color:var(--btnText);
+  border-radius:12px;
+  padding:10px 12px;
+  font-size:13px;
+  cursor:pointer;
+  min-height:40px;
+}
+button.opt[aria-pressed="true"]{
+  background:var(--btnActive);
+  color:var(--btnActiveText);
+  border-color:transparent;
+}
+button.opt:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+.current,
+.memoBox{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  margin-top:12px;
+}
+.current h4,
+.memoBox h4{
+  margin:0 0 8px 0;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.row{
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  gap:12px;
+  padding:6px 0;
+  border-top:1px dashed var(--border);
+  font-size:13px;
+}
+.row:first-of-type{
+  border-top:none;
+}
+
+.k{
+  color:var(--muted);
+  min-width:110px;
+  flex:0 0 110px;
+}
+.v{
+  font-weight:700;
+  text-align:left;
+  flex:0 1 auto;
+}
+
+textarea,
+input[type="text"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  font:inherit;
+  background:#fff;
+  color:var(--text);
+}
+
+textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.field{
+  margin-top:10px;
+}
+.field label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.inputSuffixWrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.inputSuffixWrap input{
+  flex:1;
+}
+.inputSuffix{
+  color:var(--muted);
+  font-size:14px;
+  white-space:nowrap;
+}
+
+.bottomActions{
+  margin-top:12px;
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(17,24,39,.92);
+  color:#fff;
+  padding:10px 12px;
+  border-radius:12px;
+  font-size:13px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease;
+  z-index:999;
+}
+.toast.show{opacity:1}
+
+/* ===== Export Sheet ===== */
+.exportSheet{
+  position:fixed;
+  left:-99999px;
+  top:0;
+  width:794px;
+  height:1123px;
+  background:#fff;
+  color:#111;
+  padding:22px;
+  font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;
+  overflow:hidden;
+}
+.exportTitle{
+  font-size:20px;
+  font-weight:700;
+  line-height:1.35;
+  margin-bottom:4px;
+}
+.exportMeta{
+  font-size:12px;
+  color:#666;
+  margin-bottom:10px;
+}
+
+.exportImageSection{
+  height:430px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:12px;
+}
+.exportImageWrap{
+  width:100%;
+  height:100%;
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.exportStage{
+  position:relative;
+  width:100%;
+  max-width:430px;
+  aspect-ratio:1 / 1;
+  background:#fff;
+}
+.exportLayer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+}
+
+.exportDetailSection{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.exportSection h3{
+  font-size:14px;
+  margin:0 0 6px 0;
+}
+.exportLine{
+  padding:6px 0;
+  border-top:1px solid #eee;
+  font-size:12px;
+  line-height:1.5;
+}
+.exportLine:first-of-type{
+  border-top:none;
+}
+.exportLine span{
+  font-weight:700;
+}
+
+.exportMemo{
+  white-space:pre-wrap;
+  line-height:1.5;
+  font-size:12px;
+  border:1px solid #eee;
+  border-radius:12px;
+  padding:10px;
+  min-height:120px;
+  max-height:180px;
+  overflow:hidden;
+}
+
+.twoBtns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
