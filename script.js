@@ -78,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
       selId: "sel-unit",
       options: [
         { id: "normal", label: "通常", file: "unit/unit_normal.png" },
-        { id: "senbondo2", label: "千本格子2枚内側", file: "unit/unit_senbondo2.png" },
         { id: "senbondo_zenmen", label: "千本格子4枚", file: "unit/unit_senbondo_zenmen.png" }
       ],
       defaultId: "normal"
